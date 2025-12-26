@@ -35,8 +35,8 @@ interface Role {
   active: boolean;
 }
 
-const API_URL = "http://localhost:5000/api/staff";
-const ROLES_API = "http://localhost:5000/api/roles";
+const API_URL = "https://listee-backend.onrender.com/api/staff";
+const ROLES_API = "https://listee-backend.onrender.com/api/roles";
 
 const StaffManagement = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);

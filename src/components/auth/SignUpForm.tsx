@@ -53,7 +53,7 @@ export default function SignUpForm() {
     if (!validate()) return;
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", formData);
+      const res = await axios.post("https://listee-backend.onrender.com/api/auth/register", formData);
 
       if (!res.data.success) {
         setErrors({ ...errors, api: res.data.message || "Registration failed" });

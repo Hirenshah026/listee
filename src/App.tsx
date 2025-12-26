@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route } from "react-router";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/pr/ProtectedRoute";
 import StaffProtectedRoute from "./components/pr/StaffProtectedRoute";
 
@@ -22,9 +22,7 @@ import LineChart from "./pages/Charts/LineChart";
 import BarChart from "./pages/Charts/BarChart";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 
-// Admin Roles Pages
 import RolesList from "./admin/pages/roles/RolesList";
-
 import DoctorList from "./admin/pages/doctors/DoctorList";
 import AddDoctor from "./admin/pages/doctors/AddDoctor";
 import EditDoctor from "./admin/pages/doctors/EditDoctor";
@@ -38,32 +36,31 @@ import StaffForgotPassword from "./staff/auth/StaffForgotPassword";
 import StaffDashboard from "./staff/StaffDashboard";
 import Chat from "./pages/Chats";
 import QuestionPage from "./admin/pages/question/QuestionPage";
-// import StaffLogin from "./staff/auth/StaffLogin";
 import MobileAuth from "./chatuser/MobileAuth";
+
 export default function App() {
   return (
-    <Router >
+    <Router>
       <ScrollToTop />
       <Routes>
 
-        {/* PUBLIC ROUTES */}
+        {/* PUBLIC */}
         <Route path="signin" element={<SignIn />} />
         <Route path="signup" element={<SignUp />} />
         <Route path="chat" element={<Chat />} />
-
         <Route path="staff/login" element={<StaffLogin />} />
         <Route path="staff/forgot-password" element={<StaffForgotPassword />} />
         <Route path="user/login" element={<MobileAuth />} />
-        {/* PROTECTED ROUTES */}
+
+        {/* DOCTOR */}
         <Route
-          path="/doctor-panel/*"
+          path="doctor-panel"
           element={
             <ProtectedRoute>
               <AppLayout />
             </ProtectedRoute>
           }
         >
-          {/* Nested routes rendered inside AppLayout */}
           <Route index element={<Home />} />
           <Route path="profile" element={<UserProfiles />} />
           <Route path="calendar" element={<Calendar />} />
@@ -80,30 +77,29 @@ export default function App() {
           <Route path="bar-chart" element={<BarChart />} />
         </Route>
 
+        {/* ADMIN */}
         <Route
-          path="/admin/*"
+          path="admin"
           element={
             <ProtectedRoute>
               <AppLayout />
             </ProtectedRoute>
           }
         >
-
           <Route path="roles" element={<RolesList />} />
-
           <Route path="doctors" element={<DoctorList />} />
           <Route path="doctors/add" element={<AddDoctor />} />
           <Route path="doctors/edit/:id" element={<EditDoctor />} />
-          <Route path="city-management/" element={<CityList />} />
-          <Route path="area-management/" element={<AreaList />} />
-          <Route path="marketing-persons-management/" element={<MarketingPersonList />} />
-          <Route path="staff-management/" element={<StaffManagement />} />
-          <Route path="question-management/" element={<QuestionPage />} />
-          {/* aur admin related nested pages */}
+          <Route path="city-management" element={<CityList />} />
+          <Route path="area-management" element={<AreaList />} />
+          <Route path="marketing-persons-management" element={<MarketingPersonList />} />
+          <Route path="staff-management" element={<StaffManagement />} />
+          <Route path="question-management" element={<QuestionPage />} />
         </Route>
 
+        {/* STAFF */}
         <Route
-          path="/staff/*"
+          path="staff"
           element={
             <StaffProtectedRoute>
               <AppLayout />
@@ -111,13 +107,11 @@ export default function App() {
           }
         >
           <Route path="dashboard" element={<StaffDashboard />} />
-
         </Route>
 
         {/* FALLBACK */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
-
   );
 }

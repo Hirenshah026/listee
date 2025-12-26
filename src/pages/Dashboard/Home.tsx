@@ -8,7 +8,7 @@ interface User {
   role?: string;
 }
 export default function Home() {
-  const { user, loading } = useUser() as {
+  const { user, loading } = useUser() as unknown as {
       user: User | null;
       loading: boolean;
       

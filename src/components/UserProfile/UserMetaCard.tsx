@@ -7,30 +7,19 @@ import Label from "../form/Label";
 import useUser from "../../hooks/useUser";
 import axios from "axios";
 
-/* ------------------ TYPES ------------------ */
 interface User {
   name: string;
   email: string;
-  phone?: string;
-  address?: string;
+  phone: string;
+  address: string;
   role?: string;
-  profile?: string;
-}
-
-interface UploadPhotoModalProps {
-  open: boolean;
-  onClose: () => void;
-  onUploaded: (path: string) => void;
+  profile?: string; // profile image path
 }
 
 /* ------------------ UPLOAD PHOTO MODAL ------------------ */
-function UploadPhotoModal({
-  open,
-  onClose,
-  onUploaded,
-}: UploadPhotoModalProps) {
+function UploadPhotoModal({ open, onClose, onUploaded }: any) {
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>("");
+  const [preview, setPreview] = useState("");
 
   useEffect(() => {
     if (!open) {
@@ -60,7 +49,6 @@ function UploadPhotoModal({
 
   const handleUpload = async () => {
     if (!file) return alert("Select an image first!");
-
     const formData = new FormData();
     formData.append("profile", file);
 
@@ -71,14 +59,15 @@ function UploadPhotoModal({
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      onUploaded(res.data.profile);
+      onUploaded(res.data.profile); // return uploaded path
       onClose();
     } catch (err) {
-      console.error(err);
+      console.log(err);
       alert("Upload failed!");
     }
   };
@@ -86,14 +75,17 @@ function UploadPhotoModal({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-900 w-[350px] p-6 rounded-xl shadow-lg">
-        <h2 className="text-xl font-bold text-center mb-4">
+
+        <h2 className="text-xl font-bold text-center text-gray-800 dark:text-white mb-4">
           Upload Profile Photo
         </h2>
 
+        {/* Drag Drop Area */}
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer"
+          className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl 
+                     p-6 cursor-pointer text-center hover:border-blue-500 transition"
         >
           {preview ? (
             <img
@@ -103,32 +95,33 @@ function UploadPhotoModal({
           ) : (
             <>
               <div className="text-5xl mb-2">📁</div>
-              <p>Drag & drop image here</p>
-              <p className="text-xs">OR</p>
+              <p className="text-gray-600 dark:text-gray-300">
+                Drag & drop image here
+              </p>
+              <p className="text-xs text-gray-400">OR</p>
             </>
           )}
 
           <label className="mt-2 block cursor-pointer">
-            <span className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <span className="px-3 py-1 bg-blue-600 text-white rounded cursor-pointer text-sm">
               Choose File
             </span>
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleSelect}
-            />
+            <input type="file" accept="image/*" className="hidden" onChange={handleSelect} />
           </label>
         </div>
 
+        {/* Buttons */}
         <div className="flex justify-end gap-3 mt-5">
-          <button onClick={onClose} className="px-4 py-1.5 bg-gray-200 rounded">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 bg-gray-200 dark:bg-gray-700 dark:text-white rounded"
+          >
             Cancel
           </button>
           <button
             onClick={handleUpload}
+            className="px-4 py-1.5 bg-blue-600 text-white rounded disabled:opacity-50"
             disabled={!file}
-            className="px-4 py-1.5 bg-blue-600 text-white rounded"
           >
             Upload
           </button>
@@ -148,13 +141,13 @@ export default function UserMetaCard() {
   };
 
   const [form, setForm] = useState<User | null>(null);
+
+  // For Upload Photo Modal
   const [uploadModal, setUploadModal] = useState(false);
-  const [profilePreview, setProfilePreview] = useState<string>("");
+  const [profilePreview, setProfilePreview] = useState("");
 
   useEffect(() => {
-    if (user?.profile) {
-      setProfilePreview(`http://localhost:5000${user.profile}`);
-    }
+    if (user?.profile) setProfilePreview(`http://localhost:5000${user.profile}`);
   }, [user]);
 
   const handleOpen = () => {
@@ -173,15 +166,13 @@ export default function UserMetaCard() {
         "http://localhost:5000/api/doctor-panel-update-profile",
         form,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
       refreshUser();
       closeModal();
     } catch (err) {
-      console.error(err);
+      console.log("Failed", err);
     }
   };
 
@@ -195,10 +186,11 @@ export default function UserMetaCard() {
 
   return (
     <>
-      <div className="p-5 border rounded-2xl flex justify-between items-center">
+      {/* Card */}
+      <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 flex justify-between items-center">
         <div className="flex items-center gap-6">
           <div className="relative">
-            <div className="w-20 h-20 overflow-hidden rounded-full border">
+            <div className="w-20 h-20 overflow-hidden border border-gray-300 dark:border-gray-700 rounded-full">
               <img
                 src={profilePreview || "/images/user/owner.jpg"}
                 className="w-full h-full object-cover"
@@ -206,36 +198,36 @@ export default function UserMetaCard() {
             </div>
             <button
               onClick={() => setUploadModal(true)}
-              className="absolute bottom-1 right-1 bg-white p-1 rounded-full"
+              className="absolute bottom-1 right-1 bg-white dark:bg-gray-800 p-1 rounded-full shadow"
             >
               ✏️
             </button>
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold">
-              {user.name} {user.phone && `| ${user.phone}`}
+            <h4 className="text-lg font-semibold text-gray-800 dark:text-white">
+              {user.name} | {user.phone}
             </h4>
-            <div className="text-sm text-gray-500">
-              <span>{user.role}</span> · <span>{user.email}</span>
-              {user.address && ` · ${user.address}`}
+            <div className="flex flex-wrap gap-3 text-sm text-gray-500 dark:text-gray-400">
+              <span>{user.role}</span>
+              <span>{user.email}</span>
+              <span>{user.address}</span>
             </div>
           </div>
         </div>
 
         <button
           onClick={handleOpen}
-          className="border px-4 py-2 rounded-full"
+          className="border border-gray-300 dark:border-gray-700 px-4 py-2 rounded-full"
         >
           Edit
         </button>
       </div>
 
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px]">
-        <div className="p-6">
-          <h4 className="text-2xl font-semibold mb-4">
-            Edit Personal Info
-          </h4>
+      {/* Edit Info Modal */}
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
+        <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+          <h4 className="text-2xl font-semibold mb-3">Edit Personal Info</h4>
 
           <div className="grid grid-cols-2 gap-5">
             <div>
@@ -260,14 +252,13 @@ export default function UserMetaCard() {
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline" onClick={closeModal}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={closeModal}>Cancel</Button>
             <Button onClick={handleSave}>Save</Button>
           </div>
         </div>
       </Modal>
 
+      {/* Upload Photo Modal */}
       <UploadPhotoModal
         open={uploadModal}
         onClose={() => setUploadModal(false)}

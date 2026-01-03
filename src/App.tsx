@@ -61,7 +61,7 @@ export default function App() {
         <Route path="staff/login" element={<StaffLogin />} />
         <Route path="staff/forgot-password" element={<StaffForgotPassword />} />
         <Route path="user/login" element={<MobileAuth />} />
-        <Route path="astro/regioster" element={<AstrologerRegister />} />
+        <Route path="astro/register" element={<AstrologerRegister />} />
         <Route path="astro/login" element={<AstrologerLogin />} />
         <Route path="astro/logout" element={<AstrologerLogin />} />
         <Route path="astro/list" element={<AstrologerPage />} />

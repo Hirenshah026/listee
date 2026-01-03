@@ -14,7 +14,7 @@ interface City {
   show: boolean;
 }
 
-const API_URL = "http://localhost:5000/api/cities";
+const API_URL = "https://listee-backend.onrender.com/api/cities";
 
 /* =======================
    DataTable Custom Styles

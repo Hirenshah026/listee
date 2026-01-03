@@ -2,14 +2,14 @@ import React from "react";
 
 interface SwitchProps {
   label?: string;
-  checked: boolean; // Controlled
+  checked?: boolean; // Controlled
   disabled?: boolean;
   onChange?: (checked: boolean) => void;
 }
 
 const Switch: React.FC<SwitchProps> = ({
   label = "",
-  checked,
+  checked = false,
   disabled = false,
   onChange,
 }) => {

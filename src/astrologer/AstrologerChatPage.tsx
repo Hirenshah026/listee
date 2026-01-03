@@ -67,7 +67,7 @@ const AstrologerChatPage = () => {
     if (!ASTRO_ID) return;
 
     axios
-      .get(`http://https://listee-backend.onrender.com:5000/api/messages/users/${ASTRO_ID}`)
+      .get(`https://listee-backend.onrender.com:5000/api/messages/users/${ASTRO_ID}`)
       .then(res => setUsers(res.data.users || []))
       .catch(err => console.error("User list error:", err));
   }, [ASTRO_ID]);
@@ -82,7 +82,7 @@ const AstrologerChatPage = () => {
     setSelectedUser(fixedUser);
 
     const res = await axios.get(
-      `http://https://listee-backend.onrender.com:5000/api/messages/${ASTRO_ID}/${u._id}`
+      `https://listee-backend.onrender.com:5000/api/messages/${ASTRO_ID}/${u._id}`
     );
 
     setMessages(res.data.messages || []);
@@ -92,7 +92,7 @@ const AstrologerChatPage = () => {
   const sendMessage = async () => {
     if (!input.trim() || !selectedUser || !ASTRO_ID) return;
 
-    const res = await axios.post("http://https://listee-backend.onrender.com:5000/api/messages", {
+    const res = await axios.post("https://listee-backend.onrender.com:5000/api/messages", {
       senderId: ASTRO_ID,
       receiverId: selectedUser._id,
       text: input,

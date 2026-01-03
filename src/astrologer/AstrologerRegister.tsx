@@ -93,7 +93,7 @@ const AstrologerRegister = () => {
       setLoading(true);
       setAlert(null);
 
-      const res = await fetch("http://https://listee-backend.onrender.com:5000/api/auth/astro/register", {
+      const res = await fetch("https://listee-backend.onrender.com:5000/api/auth/astro/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, role: "astro" }),

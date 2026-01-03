@@ -6,6 +6,11 @@ type LoggedUser = {
   _id: string;
   name: string;
   email?: string;
+  image?: string;
+  role?: string;
+  experience?: number;
+  rating?: number;
+  about?: string;
 };
 
 export default function useUser() {
@@ -15,20 +20,22 @@ export default function useUser() {
   const fetchUser = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role") || "admin";
       if (!token) {
         setLoading(false);
         return;
       }
 
       const res = await axios.get(
-        "https://listee-backend.onrender.com/api/doctor-panel-profile",
+        "http://192.168.105.180:5000/api/doctor-panel-profile",
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            role: localStorage.getItem("role")??'admin',
+            role: role,
           },
         }
       );
+
 
       setUser(res.data.user);
     } catch (err) {

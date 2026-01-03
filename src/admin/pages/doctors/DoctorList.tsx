@@ -6,8 +6,8 @@ import PageMeta from "../../../components/common/PageMeta";
 import { Link, useNavigate } from "react-router-dom";
 import Switch from "../../../components/form/switch/Switch";
 
-const API_URL = "https://listee-backend.onrender.com/api/doctors";
-const CITIES_API = "https://listee-backend.onrender.com/api/cities";
+const API_URL = "http://localhost:5000/api/doctors";
+const CITIES_API = "http://localhost:5000/api/cities";
 
 interface Doctor {
   _id: string;

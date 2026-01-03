@@ -10,12 +10,12 @@ export default function ToggleSwitch() {
       <div className="flex gap-4">
         <Switch
           label="Default"
-          checked={true}
+          defaultChecked={true}
           onChange={handleSwitchChange}
         />
         <Switch
           label="Checked"
-          checked={true}
+          defaultChecked={true}
           onChange={handleSwitchChange}
         />
         <Switch label="Disabled" disabled={true} />
@@ -23,15 +23,17 @@ export default function ToggleSwitch() {
       <div className="flex gap-4">
         <Switch
           label="Default"
-          checked={true}
+          defaultChecked={true}
           onChange={handleSwitchChange}
+          color="gray"
         />
         <Switch
           label="Checked"
-          checked={true}
+          defaultChecked={true}
           onChange={handleSwitchChange}
+          color="gray"
         />
-        <Switch label="Disabled" disabled={true} />
+        <Switch label="Disabled" disabled={true} color="gray" />
       </div>
     </ComponentCard>
   );

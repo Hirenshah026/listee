@@ -4,6 +4,7 @@ import SignInForm from "../../components/auth/SignInForm";
 
 export default function SignIn() {
   localStorage.removeItem("token");
+  localStorage.removeItem("role");
   return (
     <>
       <PageMeta

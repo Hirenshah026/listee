@@ -1,10 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const MobileAuth: React.FC = () => {
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const navigate = useNavigate();
+
+  // ✅ Clear localStorage ONLY once (on page load)
+  useEffect(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,22 +27,43 @@ const MobileAuth: React.FC = () => {
       setLoading(true);
       setMessage("");
 
-      const res = await axios.post("/api/auth/mobile-check", { mobile });
+      const res = await axios.post(
+        "http://192.168.105.180:5000/api/auth/mobile-check",
+        { mobile }
+      );
 
+      // ✅ Save to localStorage
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
 
-      setMessage(res.data.exists ? "Logging you in…" : "Creating your account…");
+      console.log("Saved token:", res.data.token);
+
+      setMessage(
+        res.data.exists
+          ? "Logging you in…"
+          : "Creating your account…"
+      );
+
+      // ✅ Navigate after short delay
+      setTimeout(() => {
+        navigate("/astro/list");
+      }, 1500);
+
     } catch (err: any) {
-      setMessage(err.response?.data?.message || "Something went wrong");
+      setMessage(
+        err.response?.data?.message || "Something went wrong"
+      );
     } finally {
-      setLoading(false);
+      
+      setTimeout(() => {
+        setLoading(false);
+      }, 1500);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#e7f6f3] to-[#f9fafb] flex flex-col">
-      
+
       {/* Top Brand */}
       <div className="py-8 text-center">
         <div className="mx-auto w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center shadow-lg">
@@ -50,7 +80,7 @@ const MobileAuth: React.FC = () => {
       {/* Card */}
       <div className="flex-1 flex items-start justify-center px-4">
         <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 mt-4">
-          
+
           <h2 className="text-lg font-medium text-gray-800 text-center">
             Verify your phone number
           </h2>
@@ -59,7 +89,7 @@ const MobileAuth: React.FC = () => {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-            
+
             {/* Phone Input */}
             <div className="flex gap-3">
               <div className="w-20 flex items-center justify-center border rounded-lg bg-gray-50 text-gray-700 font-medium">
@@ -70,7 +100,9 @@ const MobileAuth: React.FC = () => {
                 type="tel"
                 maxLength={10}
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) =>
+                  setMobile(e.target.value.replace(/\D/g, ""))
+                }
                 placeholder="Phone number"
                 className="flex-1 border rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00a884]"
               />

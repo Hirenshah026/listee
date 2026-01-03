@@ -10,7 +10,7 @@ interface QA {
   answer: string;
 }
 
-const QA_API = "https://listee-backend.onrender.com/api/questions";
+const QA_API = "http://localhost:5000/api/questions";
 
 const customStyles: TableStyles = {
   headRow: {

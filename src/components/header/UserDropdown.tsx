@@ -24,7 +24,7 @@ export default function UserDropdown() {
   function closeDropdown() {
     setIsOpen(false);
   }
-  const { user, loading } = useUser() as unknown as {
+  const { user, loading } = useUser() as {
       user: User | null;
       loading: boolean;
       

@@ -73,7 +73,7 @@ const ChatPage = () => {
 
     axios
       .get(
-        `http://192.168.105.180:5000/api/messages/${CURRENT_USER_ID}/${ASTRO_ID}`
+        `http://https://listee-backend.onrender.com:5000/api/messages/${CURRENT_USER_ID}/${ASTRO_ID}`
       )
       .then(res => setMessages(res.data.messages || []))
       .catch(() => { });
@@ -118,7 +118,7 @@ const ChatPage = () => {
     }
 
     const res = await axios.post(
-      "http://192.168.105.180:5000/api/messages",
+      "http://https://listee-backend.onrender.com:5000/api/messages",
       {
         senderId: CURRENT_USER_ID,
         receiverId: ASTRO_ID,

@@ -19,7 +19,7 @@ const AstrologerListPage = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("http://192.168.105.180:5000/api/auth/astro/list");
+        const res = await fetch("http://https://listee-backend.onrender.com:5000/api/auth/astro/list");
         const data = await res.json();
 
         if (!res.ok) {

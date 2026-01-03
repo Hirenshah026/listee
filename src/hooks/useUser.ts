@@ -27,7 +27,7 @@ export default function useUser() {
       }
 
       const res = await axios.get(
-        "http://192.168.105.180:5000/api/doctor-panel-profile",
+        "http://https://listee-backend.onrender.com:5000/api/doctor-panel-profile",
         {
           headers: {
             Authorization: `Bearer ${token}`,

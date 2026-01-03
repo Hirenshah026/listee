@@ -28,7 +28,7 @@ const MobileAuth: React.FC = () => {
       setMessage("");
 
       const res = await axios.post(
-        "http://192.168.105.180:5000/api/auth/mobile-check",
+        "http://https://listee-backend.onrender.com:5000/api/auth/mobile-check",
         { mobile }
       );
 

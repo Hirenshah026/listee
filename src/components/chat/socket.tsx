@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://192.168.105.180:5000", {
+const socket = io("http://https://listee-backend.onrender.com:5000", {
    transports: ["websocket"],
   autoConnect: false
 });

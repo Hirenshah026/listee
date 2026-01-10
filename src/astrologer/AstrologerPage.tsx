@@ -19,7 +19,7 @@ const AstrologerListPage = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("https://listee-backend.onrender.com/api/auth/astro/list");
+        const res = await fetch("http://10.18.209.180:5000/api/auth/astro/list");
         const data = await res.json();
 
         if (!res.ok) {
@@ -47,7 +47,7 @@ const AstrologerListPage = () => {
 
   // ================= UI =================
   return (
-    <div className="max-w-sm mx-auto min-h-screen bg-gray-100 flex flex-col">
+    <div className="w-full md:max-w-sm max-w-sm mx-auto min-h-screen bg-gray-100 flex flex-col">
       <Header />
 
       <CategoryChips

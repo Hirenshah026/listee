@@ -54,7 +54,7 @@ function UploadPhotoModal({ open, onClose, onUploaded }: any) {
 
     try {
       const res = await axios.post(
-        "https://listee-backend.onrender.com/api/doctor-panel-upload-photo",
+        "http://10.18.209.180:5000/api/doctor-panel-upload-photo",
         formData,
         {
           headers: {
@@ -134,7 +134,7 @@ function UploadPhotoModal({ open, onClose, onUploaded }: any) {
 /* ------------------ MAIN USER META CARD ------------------ */
 export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user, loading, refreshUser } = useUser() as unknown as {
+  const { user, loading, refreshUser } = useUser() as {
     user: User | null;
     loading: boolean;
     refreshUser: () => void;
@@ -147,7 +147,7 @@ export default function UserMetaCard() {
   const [profilePreview, setProfilePreview] = useState("");
 
   useEffect(() => {
-    if (user?.profile) setProfilePreview(`https://listee-backend.onrender.com${user.profile}`);
+    if (user?.profile) setProfilePreview(`http://10.18.209.180:5000${user.profile}`);
   }, [user]);
 
   const handleOpen = () => {
@@ -163,7 +163,7 @@ export default function UserMetaCard() {
   const handleSave = async () => {
     try {
       await axios.put(
-        "https://listee-backend.onrender.com/api/doctor-panel-update-profile",
+        "http://10.18.209.180:5000/api/doctor-panel-update-profile",
         form,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -177,7 +177,7 @@ export default function UserMetaCard() {
   };
 
   const handlePhotoUploaded = (path: string) => {
-    setProfilePreview(`https://listee-backend.onrender.com${path}`);
+    setProfilePreview(`http://10.18.209.180:5000${path}`);
     refreshUser();
   };
 

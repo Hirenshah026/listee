@@ -34,7 +34,7 @@ export default function Sidebar({ onSelect, selectedUser }: Props) {
 
     const fetchUsers = async () => {
       try {
-        const res = await axios.get("https://listee-backend.onrender.com/api/doctors");
+        const res = await axios.get("http://10.18.209.180:5000/api/doctors");
         if (!res.data.success) return;
 
         const usersList: User[] = res.data.doctors;
@@ -46,7 +46,7 @@ export default function Sidebar({ onSelect, selectedUser }: Props) {
             .map(async (u) => {
               try {
                 const msgRes = await axios.get(
-                  `https://listee-backend.onrender.com/api/messages/last/${CURRENT_USER_ID}/${u._id}`
+                  `http://10.18.209.180:5000/api/messages/last/${CURRENT_USER_ID}/${u._id}`
                 );
 
                 return {

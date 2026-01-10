@@ -12,13 +12,13 @@ const Header = () => {
     { label: "Profile", path: role === "chatuser" ? "/user/profile" : "/astro/profile" },
     { label: "Settings", path: "/astro/settings" },
     { label: "My Orders", path: "/astro/orders" },
-    { label: "Logout", path: "/astro/logout" },
+    { label: loading ? "Logout" : "Login", path: "/astro/logout" },
   ];
 
   return (
     <>
       {/* Header */}
-      <div className="bg-yellow-300 px-4 py-3 flex items-center justify-between shadow-md max-w-sm mx-auto w-full rounded-b-xl relative z-30">
+      <div className="bg-yellow-300 px-4 py-3 flex items-center justify-between shadow-md max-w1-sm mx-auto w-full rounded-b-xl relative z-30">
         <div className="flex items-center gap-2">
           {/* User Icon */}
           <div

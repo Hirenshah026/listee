@@ -11,6 +11,8 @@ type LoggedUser = {
   experience?: number;
   rating?: number;
   about?: string;
+  freeChatTime?: number;
+  isPlanActive?:boolean;
 };
 
 export default function useUser() {
@@ -27,7 +29,7 @@ export default function useUser() {
       }
 
       const res = await axios.get(
-        "https://listee-backend.onrender.com/api/doctor-panel-profile",
+        "http://10.18.209.180:5000/api/doctor-panel-profile",
         {
           headers: {
             Authorization: `Bearer ${token}`,

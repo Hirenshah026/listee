@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Routes, Route } from "react-router";
 import ProtectedRoute from "./components/pr/ProtectedRoute";
 import StaffProtectedRoute from "./components/pr/StaffProtectedRoute";
 
@@ -66,6 +66,7 @@ export default function App() {
         <Route path="astro/logout" element={<AstrologerLogin />} />
         <Route path="astro/list" element={<AstrologerPage />} />
         <Route path="astro/home" element={<HomePage />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="astro/profile" element={<ProfilePage />} />
         <Route path="astro/chat" element={<ChatPage />} />
         <Route path="astro/chat/user" element={<AstrologerChatPage />} />

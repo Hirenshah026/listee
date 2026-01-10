@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("https://listee-backend.onrender.com", {
+const socket = io("http://10.18.209.180:5000", {
   autoConnect: false
 });
 

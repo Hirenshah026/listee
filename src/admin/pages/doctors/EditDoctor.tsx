@@ -70,7 +70,7 @@ const EditDoctor = () => {
   const fetchCities = async () => {
     try {
       setLoadingCities(true);
-      const { data } = await axios.get("https://listee-backend.onrender.com/api/cities");
+      const { data } = await axios.get("http://10.18.209.180:5000/api/cities");
       if (data.success) {
         setCities(data.cities);
         const options = data.cities.map((c: City) => ({
@@ -89,7 +89,7 @@ const EditDoctor = () => {
   // fetch doctor
   const fetchDoctor = async () => {
     try {
-      const { data } = await axios.get(`https://listee-backend.onrender.com/api/doctors/${id}`);
+      const { data } = await axios.get(`http://10.18.209.180:5000/api/doctors/${id}`);
       if (data.success) {
         const doc = data.doctor;
         setFormData({
@@ -147,7 +147,7 @@ const EditDoctor = () => {
       const payload: any = { ...formData };
       if (!payload.password) delete payload.password;
 
-      await axios.patch(`https://listee-backend.onrender.com/api/doctors/${id}`, payload);
+      await axios.patch(`http://10.18.209.180:5000/api/doctors/${id}`, payload);
 
       setAlertType("success");
       setAlertMessage("Doctor updated successfully!");

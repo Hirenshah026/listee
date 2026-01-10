@@ -20,7 +20,7 @@ const BottomNav = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-yellow-300 px-4 py-3 flex justify-around shadow-sm rounded-t-xl z-50 max-w-sm w-full">
+    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-yellow-300 px-4 py-3 flex justify-around shadow-sm rounded-t-xl z-50 max-w-sm w-full ">
       {tabs.map((tab) => {
         const isActive = location.pathname === tab.path;
         const Icon = tab.icon;

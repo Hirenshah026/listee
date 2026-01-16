@@ -33,7 +33,12 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
       try { if (peerConnection.current) await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) {}
     });
     socket.on("call-ended", () => stopAllTracks());
-    return () => { socket.off("call-made"); socket.off("answer-made"); socket.off("ice-candidate"); socket.off("call-ended"); };
+    return () => { 
+        socket.off("call-made"); 
+        socket.off("answer-made"); 
+        socket.off("ice-candidate"); 
+        socket.off("call-ended"); 
+    };
   }, [userId, localStream]);
 
   const stopAllTracks = () => {
@@ -88,57 +93,45 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
   return (
     <>
       {incomingCall && !isCalling && (
-        <div className="fixed inset-0 z-[2000] bg-[#0b141a] flex flex-col items-center justify-around text-white p-6">
+        <div className="fixed inset-0 z-[3000] bg-[#0b141a] flex flex-col items-center justify-around text-white p-6">
           <div className="flex flex-col items-center">
             <div className="w-28 h-28 bg-zinc-700 rounded-full mb-4 border-4 border-yellow-400 overflow-hidden">
-              <img src={targetUser?.image || "/banners/astrouser.jpg"} className="w-full h-full object-cover" />
+              <img src={targetUser?.image || "/banners/astrouser.jpg"} className="w-full h-full object-cover" alt="user"/>
             </div>
             <h2 className="text-2xl font-bold">{targetUser?.name || "User"}</h2>
             <p className="text-yellow-400 mt-2">Incoming {incomingCall.type} call...</p>
           </div>
           <div className="flex gap-16">
-            <button onClick={() => { socket.emit("end-call", { to: incomingCall.from }); setIncomingCall(null); }} className="bg-red-500 w-16 h-16 rounded-full flex items-center justify-center shadow-lg"><span className="text-3xl">✕</span></button>
-            <button onClick={acceptCall} className="bg-green-500 w-16 h-16 rounded-full flex items-center justify-center shadow-lg animate-pulse"><span className="text-3xl text-white">✔</span></button>
+            <button onClick={() => { socket.emit("end-call", { to: incomingCall.from }); setIncomingCall(null); }} className="bg-red-500 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg">✕</button>
+            <button onClick={acceptCall} className="bg-green-500 w-16 h-16 rounded-full flex items-center justify-center text-3xl text-white shadow-lg animate-pulse">✔</button>
           </div>
         </div>
       )}
 
       {isCalling && (
-        <div className="fixed inset-0 z-[2100] bg-[#0b141a] flex flex-col items-center justify-center overflow-hidden">
-          
-          {/* Main View */}
+        <div className="fixed inset-0 z-[3100] bg-[#0b141a] flex flex-col items-center justify-center overflow-hidden">
           {!isDummy && callType === 'video' ? (
             <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
           ) : (
             <div className="flex flex-col items-center">
               <div className="w-32 h-32 rounded-full border-4 border-yellow-500 mb-6 overflow-hidden">
-                <img src={targetUser?.image || "/banners/astrouser.jpg"} className="w-full h-full object-cover" />
+                <img src={targetUser?.image || "/banners/astrouser.jpg"} className="w-full h-full object-cover" alt="user" />
               </div>
               <h3 className="text-white text-2xl font-bold">{targetUser?.name}</h3>
-              <p className="text-yellow-500 mt-2 font-mono tracking-widest">{callType === 'video' ? "VIDEO CONNECTING..." : "VOICE CALL ACTIVE"}</p>
+              <p className="text-yellow-500 mt-2 font-mono tracking-widest">{callType === 'video' ? "CONNECTING..." : "VOICE CALL ACTIVE"}</p>
             </div>
           )}
-
-          {/* Self Video Overlay (Top Right) - Only for Video Call */}
           {callType === 'video' && (
-            <div className="absolute top-6 right-6 w-28 h-40 border-2 border-white/20 rounded-2xl overflow-hidden bg-zinc-900 shadow-2xl z-[2200]">
-              {!isDummy ? (
-                <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-800 text-[10px] text-gray-400 text-center p-2">
-                   <div className="w-10 h-10 rounded-full bg-zinc-700 mb-2 flex items-center justify-center text-lg">👤</div>
-                   Self View
-                </div>
-              )}
+            <div className="absolute top-6 right-6 w-28 h-40 border-2 border-white/20 rounded-2xl overflow-hidden bg-zinc-900 shadow-2xl z-[3200]">
+              {!isDummy ? <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" /> : <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">Self</div>}
             </div>
           )}
-
           <div className="absolute bottom-12">
             <button 
               onClick={() => { socket.emit("end-call", { to: targetUser?._id || incomingCall?.from }); stopAllTracks(); }} 
               className="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center shadow-2xl active:scale-90 border-4 border-white/10"
             >
-              <svg viewBox="0 0 24 24" width="30" height="30" fill="white" className="rotate-[135deg]"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+              <span className="text-white text-2xl rotate-[135deg]">📞</span>
             </button>
           </div>
         </div>

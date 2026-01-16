@@ -134,7 +134,7 @@ function UploadPhotoModal({ open, onClose, onUploaded }: any) {
 /* ------------------ MAIN USER META CARD ------------------ */
 export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user, loading, refreshUser } = useUser() as {
+  const { user, loading, refreshUser } = useUser() as unknown as {
     user: User | null;
     loading: boolean;
     refreshUser: () => void;

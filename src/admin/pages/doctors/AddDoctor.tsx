@@ -64,7 +64,7 @@ const AddDoctor = () => {
   const fetchCities = async () => {
     try {
       setLoadingCities(true);
-      const { data } = await axios.get("https://listee-backend.onrender.com:5000/api/cities");
+      const { data } = await axios.get("https://listee-backend.onrender.com/api/cities");
       if (data.success) {
         setCities(data.cities);
         const options = data.cities.map((c: City) => ({ label: c.name, value: c._id }));
@@ -137,7 +137,7 @@ const AddDoctor = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        "https://listee-backend.onrender.com:5000/api/admin/doctor-register",
+        "https://listee-backend.onrender.com/api/admin/doctor-register",
         formData
       );
       setMessage({ type: "success", text: "Doctor Registered Successfully!" });

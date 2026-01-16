@@ -33,9 +33,9 @@ interface MarketingPerson {
 }
 
 /* ================= API ================= */
-const CITY_API = "https://listee-backend.onrender.com:5000/api/cities";
-const AREA_API = "https://listee-backend.onrender.com:5000/api/areas";
-const PERSON_API = "https://listee-backend.onrender.com:5000/api/marketing-persons";
+const CITY_API = "https://listee-backend.onrender.com/api/cities";
+const AREA_API = "https://listee-backend.onrender.com/api/areas";
+const PERSON_API = "https://listee-backend.onrender.com/api/marketing-persons";
 
 /* ================= TABLE STYLE ================= */
 const customStyles: TableStyles = {

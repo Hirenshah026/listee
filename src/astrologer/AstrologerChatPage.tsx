@@ -93,10 +93,10 @@ const AstrologerChatPage = () => {
   const fetchUsersData = async () => {
     if (!ASTRO_ID) return;
     try {
-      const res = await axios.get(`https://listee-backend.onrender.com:5000/api/messages/users/${ASTRO_ID}`);
+      const res = await axios.get(`https://listee-backend.onrender.com/api/messages/users/${ASTRO_ID}`);
       const userList = res.data.users || [];
       const enriched = await Promise.all(userList.map(async (u: ChatUser, i: number) => {
-        const lastRes = await axios.get(`https://listee-backend.onrender.com:5000/api/messages/last/${ASTRO_ID}/${u._id}`);
+        const lastRes = await axios.get(`https://listee-backend.onrender.com/api/messages/last/${ASTRO_ID}/${u._id}`);
         return { 
             ...u, 
             name: u.name || `User ${i + 1}`, 
@@ -153,7 +153,7 @@ const AstrologerChatPage = () => {
     if (selectedFile) formData.append("image", selectedFile);
     
     try {
-      const res = await axios.post("https://listee-backend.onrender.com:5000/api/messages", formData);
+      const res = await axios.post("https://listee-backend.onrender.com/api/messages", formData);
       setMessages(prev => [...prev, res.data.message]);
       socket.emit("sendMessage", res.data.message);
       setInput(""); setSelectedFile(null); setImagePreview(null);
@@ -191,7 +191,7 @@ const AstrologerChatPage = () => {
             <div className="flex-1 overflow-y-auto">
               <div className="px-4 py-3 border-b text-yellow-600 font-bold bg-yellow-50 sticky top-0 z-10">Recent Chats</div>
               {users.map(u => (
-                <div key={u._id} onClick={() => { setSelectedUser(u); axios.get(`https://listee-backend.onrender.com:5000/api/messages/${ASTRO_ID}/${u._id}`).then(res => setMessages(res.data.messages || [])); }} className="flex items-center gap-3 p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors">
+                <div key={u._id} onClick={() => { setSelectedUser(u); axios.get(`https://listee-backend.onrender.com/api/messages/${ASTRO_ID}/${u._id}`).then(res => setMessages(res.data.messages || [])); }} className="flex items-center gap-3 p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors">
                   <img src={u.image || "/banners/astrouser.jpg"} className="w-12 h-12 rounded-full object-cover border" alt="user" />
                   <div className="flex-1 truncate">
                     <div className="flex justify-between items-center">

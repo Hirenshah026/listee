@@ -19,8 +19,8 @@ interface Area {
   active: boolean;
 }
 
-const CITY_API = "https://listee-backend.onrender.com:5000/api/cities";
-const AREA_API = "https://listee-backend.onrender.com:5000/api/areas";
+const CITY_API = "https://listee-backend.onrender.com/api/cities";
+const AREA_API = "https://listee-backend.onrender.com/api/areas";
 
 const customStyles: TableStyles = {
   headRow: { style: { backgroundColor: "#f3f4f6", fontWeight: "600" } },

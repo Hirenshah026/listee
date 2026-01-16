@@ -42,7 +42,7 @@ export default function ChatWindow({ user, onBack }: Props) {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get("https://listee-backend.onrender.com:5000/api/questions");
+        const res = await axios.get("https://listee-backend.onrender.com/api/questions");
         const qs = Array.isArray(res.data.questions) ? res.data.questions : [];
         setQuestions(qs);
       } catch (err) {

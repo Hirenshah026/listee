@@ -54,7 +54,7 @@ function UploadPhotoModal({ open, onClose, onUploaded }: any) {
 
     try {
       const res = await axios.post(
-        "https://listee-backend.onrender.com:5000/api/doctor-panel-upload-photo",
+        "https://listee-backend.onrender.com/api/doctor-panel-upload-photo",
         formData,
         {
           headers: {
@@ -163,7 +163,7 @@ export default function UserMetaCard() {
   const handleSave = async () => {
     try {
       await axios.put(
-        "https://listee-backend.onrender.com:5000/api/doctor-panel-update-profile",
+        "https://listee-backend.onrender.com/api/doctor-panel-update-profile",
         form,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

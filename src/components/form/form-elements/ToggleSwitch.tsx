@@ -25,15 +25,13 @@ export default function ToggleSwitch() {
           label="Default"
           checked={true}
           onChange={handleSwitchChange}
-          color="gray"
         />
         <Switch
           label="Checked"
           checked={true}
           onChange={handleSwitchChange}
-          color="gray"
         />
-        <Switch label="Disabled" disabled={true} />
+        <Switch label="Disabled" disabled={true} checked={false} />
       </div>
     </ComponentCard>
   );

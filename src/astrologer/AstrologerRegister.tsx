@@ -93,7 +93,7 @@ const AstrologerRegister = () => {
       setLoading(true);
       setAlert(null);
 
-      const res = await fetch("http://10.18.209.180:5000/api/auth/astro/register", {
+      const res = await fetch("http://10.184.233.180:5000/api/auth/astro/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, role: "astro" }),

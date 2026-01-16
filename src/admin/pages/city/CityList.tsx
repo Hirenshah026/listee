@@ -14,7 +14,7 @@ interface City {
   show: boolean;
 }
 
-const API_URL = "http://10.18.209.180:5000/api/cities";
+const API_URL = "http://10.184.233.180:5000/api/cities";
 
 /* =======================
    DataTable Custom Styles

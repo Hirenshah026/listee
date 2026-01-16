@@ -5,7 +5,7 @@ import PageMeta from "../../../components/common/PageMeta";
 import Switch from "../../../components/form/switch/Switch";
 import DataTable, { TableColumn } from "react-data-table-component";
 
-const API_URL = "http://10.18.209.180:5000/api/roles";
+const API_URL = "http://10.184.233.180:5000/api/roles";
 
 interface Role {
   _id: string;

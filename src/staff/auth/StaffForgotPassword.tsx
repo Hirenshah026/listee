@@ -21,7 +21,7 @@ export default function StaffResetPassword() {
     setLoading(true);
     try {
       const res = await axios.post(
-        "http://10.18.209.180:5000/api/auth/staff/forgot-password",
+        "http://10.184.233.180:5000/api/auth/staff/forgot-password",
         { email }
       );
 
@@ -47,7 +47,7 @@ export default function StaffResetPassword() {
 
     try {
       const res = await axios.post(
-        "http://10.18.209.180:5000/api/auth/staff/reset-password",
+        "http://10.184.233.180:5000/api/auth/staff/reset-password",
         { email, newPassword: password }
       );
 

@@ -64,7 +64,7 @@ const AddDoctor = () => {
   const fetchCities = async () => {
     try {
       setLoadingCities(true);
-      const { data } = await axios.get("http://10.18.209.180:5000/api/cities");
+      const { data } = await axios.get("http://10.184.233.180:5000/api/cities");
       if (data.success) {
         setCities(data.cities);
         const options = data.cities.map((c: City) => ({ label: c.name, value: c._id }));
@@ -137,7 +137,7 @@ const AddDoctor = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://10.18.209.180:5000/api/admin/doctor-register",
+        "http://10.184.233.180:5000/api/admin/doctor-register",
         formData
       );
       setMessage({ type: "success", text: "Doctor Registered Successfully!" });

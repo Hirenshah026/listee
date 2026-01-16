@@ -54,7 +54,7 @@ function UploadPhotoModal({ open, onClose, onUploaded }: any) {
 
     try {
       const res = await axios.post(
-        "http://10.18.209.180:5000/api/doctor-panel-upload-photo",
+        "http://10.184.233.180:5000/api/doctor-panel-upload-photo",
         formData,
         {
           headers: {
@@ -147,7 +147,7 @@ export default function UserMetaCard() {
   const [profilePreview, setProfilePreview] = useState("");
 
   useEffect(() => {
-    if (user?.profile) setProfilePreview(`http://10.18.209.180:5000${user.profile}`);
+    if (user?.profile) setProfilePreview(`http://10.184.233.180:5000${user.profile}`);
   }, [user]);
 
   const handleOpen = () => {
@@ -163,7 +163,7 @@ export default function UserMetaCard() {
   const handleSave = async () => {
     try {
       await axios.put(
-        "http://10.18.209.180:5000/api/doctor-panel-update-profile",
+        "http://10.184.233.180:5000/api/doctor-panel-update-profile",
         form,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -177,7 +177,7 @@ export default function UserMetaCard() {
   };
 
   const handlePhotoUploaded = (path: string) => {
-    setProfilePreview(`http://10.18.209.180:5000${path}`);
+    setProfilePreview(`http://10.184.233.180:5000${path}`);
     refreshUser();
   };
 

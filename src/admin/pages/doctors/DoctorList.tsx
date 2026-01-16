@@ -6,8 +6,8 @@ import PageMeta from "../../../components/common/PageMeta";
 import { Link, useNavigate } from "react-router-dom";
 import Switch from "../../../components/form/switch/Switch";
 
-const API_URL = "http://10.18.209.180:5000/api/doctors";
-const CITIES_API = "http://10.18.209.180:5000/api/cities";
+const API_URL = "http://10.184.233.180:5000/api/doctors";
+const CITIES_API = "http://10.184.233.180:5000/api/cities";
 
 interface Doctor {
   _id: string;

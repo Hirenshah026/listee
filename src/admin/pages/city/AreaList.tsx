@@ -19,8 +19,8 @@ interface Area {
   active: boolean;
 }
 
-const CITY_API = "http://10.18.209.180:5000/api/cities";
-const AREA_API = "http://10.18.209.180:5000/api/areas";
+const CITY_API = "http://10.184.233.180:5000/api/cities";
+const AREA_API = "http://10.184.233.180:5000/api/areas";
 
 const customStyles: TableStyles = {
   headRow: { style: { backgroundColor: "#f3f4f6", fontWeight: "600" } },

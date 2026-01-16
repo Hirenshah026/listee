@@ -5,102 +5,48 @@ import useUser from "../hooks/useUser";
 const ProfilePage = () => {
   const { user, loading } = useUser();
 
-  if (loading) {
-    return (
-      <div className="max-w-sm mx-auto min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="max-w-sm mx-auto min-h-screen flex items-center justify-center">
-        User not found
-      </div>
-    );
-  }
+  if (loading) return <div className="h-screen flex items-center justify-center bg-white">Loading...</div>;
 
   return (
-    <div className="max-w-sm mx-auto min-h-screen bg-gray-100 flex flex-col pb-24">
+    <div className="flex justify-center bg-zinc-200 h-[100dvh] w-full overflow-hidden">
+      <div className="w-full max-w-[450px] bg-white flex flex-col h-full relative shadow-2xl">
+        
+        <div className="flex-none z-50">
+          <Header />
+        </div>
 
-      {/* HEADER */}
-      <Header />
+        <div className="flex-1 overflow-y-auto scrollbar-hide bg-gray-50 pb-6">
+          <div className="p-4 mt-2 text-center">
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col items-center">
+              <img
+                src={user?.image || "/banners/astrouser.jpg"}
+                className="w-24 h-24 rounded-full object-cover border-4 border-yellow-400 shadow-md"
+                alt="profile"
+              />
+              <h2 className="text-xl font-bold text-gray-800 mt-3">{user?.name || "User"}</h2>
+              <p className="text-xs font-bold text-purple-600 uppercase tracking-widest">{user?.role || "Astrologer"}</p>
 
-      {/* PROFILE CARD */}
-      <div className="p-4 mt-4">
-        <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-
-          {/* PROFILE IMAGE */}
-          <img
-            src={user.image || "/banners/astrouser.jpg"}
-            className="w-24 h-24 rounded-full object-cover mb-4 border"
-            alt="profile"
-          />
-
-          {/* NAME & ROLE */}
-          <h2 className="text-xl font-bold text-gray-800 mb-1">
-            {user.name || "Astrologer"}
-          </h2>
-
-          <p className="text-sm text-gray-500 mb-4 capitalize">
-            {user.role || "Astrologer"}
-          </p>
-
-          {/* STATS */}
-          <div className="w-full grid grid-cols-2 gap-4 text-center mb-4">
-            <div className="bg-yellow-100 rounded-lg py-2">
-              <p className="text-xs text-gray-600">Experience</p>
-              <p className="font-semibold text-gray-800">
-                {user.experience || 0} yrs
-              </p>
+              <div className="w-full grid grid-cols-2 gap-3 mt-6">
+                <div className="bg-orange-50 rounded-2xl py-3 border border-orange-100 text-center text-gray-800 font-bold">
+                  Exp: {user?.experience || 5}y
+                </div>
+                <div className="bg-yellow-50 rounded-2xl py-3 border border-yellow-100 text-center text-gray-800 font-bold">
+                  {user?.rating || 4.8} ⭐
+                </div>
+              </div>
             </div>
 
-            <div className="bg-yellow-100 rounded-lg py-2">
-              <p className="text-xs text-gray-600">Rating</p>
-              <p className="font-semibold text-gray-800">
-                {user.rating || 0} ⭐
-              </p>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mt-4 text-left">
+              <h3 className="font-bold text-gray-800 mb-2">About Me</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">{user?.about || "Expert in Astrology."}</p>
             </div>
           </div>
+        </div>
 
-          {/* ACTION BUTTONS */}
-          <div className="flex w-full gap-3">
-            <button className="flex-1 bg-purple-600 text-white py-2 rounded-lg font-semibold">
-              Chat
-            </button>
-            <button className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold">
-              Call
-            </button>
-          </div>
+        <div className="flex-none">
+          <BottomNav />
         </div>
       </div>
-
-      {/* ABOUT */}
-      <div className="px-4 mt-4">
-        <div className="bg-white rounded-xl shadow p-4">
-          <h3 className="font-bold text-gray-800 mb-2">About Me</h3>
-          <p className="text-sm text-gray-600">
-            {user.about ||
-              "Experienced astrologer providing guidance in love, career, marriage and education."}
-          </p>
-        </div>
-      </div>
-
-      {/* REVIEWS (STATIC FOR NOW) */}
-      <div className="px-4 mt-4">
-        <div className="bg-white rounded-xl shadow p-4">
-          <h3 className="font-bold text-gray-800 mb-2">Reviews</h3>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li>⭐️⭐️⭐️⭐️⭐️ Very accurate predictions!</li>
-            <li>⭐️⭐️⭐️⭐️⭐️ Helpful and friendly astrologer.</li>
-            <li>⭐️⭐️⭐️⭐️⭐️ Highly recommend.</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* FOOTER */}
-      <BottomNav />
     </div>
   );
 };

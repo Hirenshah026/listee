@@ -19,7 +19,7 @@ const AstrologerListPage = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("http://10.18.209.180:5000/api/auth/astro/list");
+        const res = await fetch("http://10.184.233.180:5000/api/auth/astro/list");
         const data = await res.json();
 
         if (!res.ok) {

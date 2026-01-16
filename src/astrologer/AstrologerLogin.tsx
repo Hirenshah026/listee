@@ -68,7 +68,7 @@ const AstrologerLogin = () => {
       setLoading(true);
       setAlert(null);
 
-      const res = await fetch("http://10.184.233.180:5000/api/auth/astro/login", {
+      const res = await fetch("https://listee-backend.onrender.com:5000/api/auth/astro/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

@@ -147,7 +147,7 @@ export default function UserMetaCard() {
   const [profilePreview, setProfilePreview] = useState("");
 
   useEffect(() => {
-    if (user?.profile) setProfilePreview(`http://10.184.233.180:5000${user.profile}`);
+    if (user?.profile) setProfilePreview(`https://listee-backend.onrender.com${user.profile}`);
   }, [user]);
 
   const handleOpen = () => {
@@ -177,7 +177,7 @@ export default function UserMetaCard() {
   };
 
   const handlePhotoUploaded = (path: string) => {
-    setProfilePreview(`http://10.184.233.180:5000${path}`);
+    setProfilePreview(`https://listee-backend.onrender.com${path}`);
     refreshUser();
   };
 

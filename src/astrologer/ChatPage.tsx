@@ -13,7 +13,7 @@ interface Message {
   receiverId: string;
   createdAt?: string;
   isBot?: boolean;
-  isRead?: boolean; 
+  read?: boolean; 
 }
 
 const ChatPage = () => {
@@ -67,7 +67,7 @@ const ChatPage = () => {
 
     const handleReadUpdate = ({ receiverId }: { receiverId: string }) => {
       if (receiverId === ASTRO_ID) {
-        setMessages(prev => prev.map(m => m.senderId === CURRENT_USER_ID ? { ...m, isRead: true } : m));
+        setMessages(prev => prev.map(m => m.senderId === CURRENT_USER_ID ? { ...m, read: true } : m));
       }
     };
 
@@ -209,7 +209,7 @@ const ChatPage = () => {
                               {new Date(m.createdAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </p>
                             {isMe && !m.isBot && (
-                                <div className={`flex items-center ml-1 ${m.isRead ? "text-blue-500" : "text-gray-400"}`}>
+                                <div className={`flex items-center ml-1 ${m.read ? "text-blue-500" : "text-gray-400"}`}>
                                     <span className="text-[14px] font-bold">✓</span>
                                     <span className="text-[14px] font-bold -ml-1.5">✓</span>
                                 </div>
@@ -263,3 +263,4 @@ const ChatPage = () => {
 
 
 export default ChatPage;
+

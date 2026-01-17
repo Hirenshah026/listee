@@ -24,7 +24,7 @@ const ChatPage = () => {
 
   const CURRENT_USER_ID = user?._id;
   const ASTRO_ID = astrologer?._id;
-  const API_URL = "http://10.198.74.180:5000";
+  const API_URL = "https://listee-backend.onrender.com";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -260,5 +260,6 @@ const ChatPage = () => {
     </div>
   );
 };
+
 
 export default ChatPage;

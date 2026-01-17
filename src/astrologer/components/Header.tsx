@@ -14,6 +14,7 @@ const Header = () => {
     { label: "Settings", path: "/astro/settings" },
     { label: "My Orders", path: "/astro/orders" },
     { label: loading ? "Logout" : "Login", path: "/astro/logout" },
+    { label: loading ? "user Logout" : "User Login", path: "/user/login" },
   ];
 
   return (

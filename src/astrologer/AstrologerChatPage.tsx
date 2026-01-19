@@ -80,7 +80,7 @@ const AstrologerChatPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const API_URL = "https://listee-backend.onrender.com";
+  const API_URL = "http://10.198.74.180:5000";
 
   useEffect(() => {
     const handleVisualViewportResize = () => {
@@ -359,6 +359,5 @@ const AstrologerChatPage = () => {
     </div>
   );
 };
-
 
 export default AstrologerChatPage;

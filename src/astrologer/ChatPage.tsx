@@ -44,9 +44,9 @@ const ChatPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const callOverlayRef = useRef<any>(null);
 
-  const canChat = timeLeft > 0 || isPlanActive;
+  // ✅ Important Logic: Agar time bacha hai YA plan active hai, dono case mein chat chalegi
+  const canChat = timeLeft > 0 || isPlanActive === true;
 
-  // --- DB Mark Read Logic ---
   const markAsRead = async (sId: string, rId: string) => {
     try {
       await axios.post(`${API_URL}/api/messages/mark-read`, { senderId: sId, receiverId: rId });
@@ -56,6 +56,12 @@ const ChatPage = () => {
 
   useEffect(() => {
     if (userLoading || !user || !ASTRO_ID || !CURRENT_USER_ID) return;
+
+    // ✅ Check if user has an active plan (subscription) from user object
+    if (user.isPlanActive || user.subscriptionStatus === "active") {
+      setIsPlanActive(true);
+    }
+
     if (!socket.connected) socket.connect();
     socket.emit("join", CURRENT_USER_ID);
     socket.emit("start-chat-timer", { userId: CURRENT_USER_ID, astroId: ASTRO_ID, initialTime: user.freeChatTime || 0 });
@@ -74,7 +80,11 @@ const ChatPage = () => {
     socket.on("receiveMessage", onReceive);
     socket.on("messages-read-update", handleReadUpdate);
     socket.on("timer-update", (data) => setTimeLeft(data.timeLeft * 1000));
-    socket.on("timer-ended", () => { setTimeLeft(0); setIsPlanActive(false); });
+    socket.on("timer-ended", () => { 
+        setTimeLeft(0); 
+        // Timer khatam hone par plan check dobara karenge
+        if (!user.isPlanActive) setIsPlanActive(false); 
+    });
 
     return () => {
       socket.off("receiveMessage");
@@ -84,7 +94,6 @@ const ChatPage = () => {
     };
   }, [user, userLoading, ASTRO_ID, CURRENT_USER_ID]);
 
-  // Load Messages & Bot Questions
   useEffect(() => {
     if (!CURRENT_USER_ID || !ASTRO_ID) return;
     
@@ -107,14 +116,18 @@ const ChatPage = () => {
 
   const sendMessage = async (customText?: string) => {
     const textToSend = customText || input;
-    if ((!textToSend.trim() && !selectedFile) || !canChat) return;
+    
+    // Yahan canChat check ho raha hai
+    if ((!textToSend.trim() && !selectedFile) || !canChat) {
+        if(!canChat) alert("Please recharge or activate a plan to continue chatting.");
+        return;
+    }
 
     const tempText = textToSend;
     setInput(""); 
     setSelectedFile(null); 
     setImagePreview(null);
 
-    // Keep focus on input after sending
     setTimeout(() => {
       inputRef.current?.focus();
     }, 10);
@@ -139,6 +152,7 @@ const ChatPage = () => {
       setMessages(prev => [...prev, savedUserMsg]);
       socket.emit("sendMessage", savedUserMsg);
 
+      // Bot logic only triggers for free/timed chat, usually not for paid plans
       if (timeLeft > 0 && questionIndex < botQuestions.length) {
         setTimeout(() => setIsTyping(true), 1000);
         setTimeout(async () => {
@@ -191,7 +205,13 @@ const ChatPage = () => {
               <img src={astrologer?.image || "/banners/astrouser.jpg"} className="w-11 h-11 rounded-full border-2 border-white object-cover" alt="astro" />
               <div>
                 <p className="font-bold text-[15px] leading-tight">{astrologer?.name}</p>
-                <p className="text-[10px] font-bold uppercase">⏱️ {Math.floor(timeLeft/60000)}:{(Math.floor(timeLeft/1000)%60).toString().padStart(2,'0')}</p>
+                <div className="flex items-center gap-2">
+                    {isPlanActive ? (
+                        <span className="text-[10px] bg-green-600 text-white px-1.5 rounded-full font-bold">PLAN ACTIVE</span>
+                    ) : (
+                        <p className="text-[10px] font-bold uppercase">⏱️ {Math.floor(timeLeft/60000)}:{(Math.floor(timeLeft/1000)%60).toString().padStart(2,'0')}</p>
+                    )}
+                </div>
               </div>
             </div>
           </div>
@@ -214,7 +234,7 @@ const ChatPage = () => {
                         {m.text && <p className="text-[15px] text-gray-800 break-words whitespace-pre-wrap flex-1 min-w-0">{m.text}</p>}
                         <div className="flex items-center shrink-0 mb-[-2px]">
                             <p className="text-[10px] text-gray-400 font-medium uppercase">
-                              {new Date(m.createdAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                              {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : ''}
                             </p>
                             {isMe && !m.isBot && (
                                 <div className={`flex items-center ml-1 ${m.isRead ? "text-blue-500" : "text-gray-400"}`}>
@@ -249,11 +269,11 @@ const ChatPage = () => {
                 }
               }} 
               className="flex-1 bg-transparent border-none outline-none py-1.5" 
-              placeholder={canChat ? "Type a message..." : "Chat ended"} 
+              placeholder={canChat ? "Type a message..." : "Chat ended - Activate Plan"} 
             />
           </div>
           <button 
-            onMouseDown={(e) => e.preventDefault()} // Stops focus from leaving input
+            onMouseDown={(e) => e.preventDefault()} 
             onClick={() => sendMessage()} 
             className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${canChat ? 'bg-[#00a884]' : 'bg-gray-400'}`}
           >

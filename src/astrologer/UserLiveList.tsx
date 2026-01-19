@@ -9,7 +9,7 @@ const UserLiveList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   // API URL
-  const API_URL = "http://10.198.74.180:5000";
+  const API_URL = "https://listee-backend.onrender.com";
 
   useEffect(() => {
     const fetchAstros = async () => {
@@ -113,5 +113,6 @@ const UserLiveList: React.FC = () => {
     </div>
   );
 };
+
 
 export default UserLiveList;

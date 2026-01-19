@@ -1,5 +1,6 @@
 export interface Astrologer {
   id: number;
+  _id: number;
   name: string;
   skills: string;
   languages: string;
@@ -7,4 +8,6 @@ export interface Astrologer {
   price: string;
   orders: number;
   image: string;
+  specialty:string;
+  rate:string;
 }

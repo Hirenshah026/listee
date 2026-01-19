@@ -1,8 +1,13 @@
 import { io } from "socket.io-client";
 
-const socket = io("https://listee-backend.onrender.com", {
-   transports: ["websocket"],
-  autoConnect: false
+// Space ko remove kar diya gaya hai aur connection options optimize kiye hain
+const API_URL = "https://listee-backend.onrender.com";
+const socket = io(API_URL, {
+  transports: ["websocket"],
+  autoConnect: false,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
 });
 
 export default socket;

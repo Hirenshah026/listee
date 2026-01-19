@@ -78,9 +78,9 @@ const ChatPage = () => {
   // 3. HISTORY & BOT
   useEffect(() => {
     if (!CURRENT_USER_ID || !ASTRO_ID) return;
-    axios.get(`http://10.198.74.180:5000/api/messages/${CURRENT_USER_ID}/${ASTRO_ID}`)
+    axios.get(`https://listee-backend.onrender.com/api/messages/${CURRENT_USER_ID}/${ASTRO_ID}`)
       .then(res => { if (res.data.messages) setMessages(res.data.messages); });
-    axios.get("http://10.198.74.180:5000/api/questions").then(res => {
+    axios.get("https://listee-backend.onrender.com/api/questions").then(res => {
       if (res.data.success) setBotQuestions(res.data.questions);
     });
   }, [CURRENT_USER_ID, ASTRO_ID]);
@@ -102,10 +102,10 @@ const ChatPage = () => {
         formData.append("text", textToSend);
         formData.append("senderId", CURRENT_USER_ID!);
         formData.append("receiverId", ASTRO_ID!);
-        const res = await axios.post("http://10.198.74.180:5000/api/messages/", formData);
+        const res = await axios.post("https://listee-backend.onrender.com/api/messages/", formData);
         savedUserMsg = res.data.message;
       } else {
-        const res = await axios.post("http://10.198.74.180:5000/api/messages", { text: textToSend, senderId: CURRENT_USER_ID!, receiverId: ASTRO_ID!, isBot: false });
+        const res = await axios.post("https://listee-backend.onrender.com/api/messages", { text: textToSend, senderId: CURRENT_USER_ID!, receiverId: ASTRO_ID!, isBot: false });
         savedUserMsg = res.data.message;
       }
       setMessages(prev => [...prev, savedUserMsg]);
@@ -114,7 +114,7 @@ const ChatPage = () => {
       if (timeLeft > 0 && questionIndex < botQuestions.length) {
         setTimeout(() => setIsTyping(true), 1000);
         setTimeout(async () => {
-          const botRes = await axios.post("http://10.198.74.180:5000/api/messages", { text: botQuestions[questionIndex].answer, senderId: ASTRO_ID!, receiverId: CURRENT_USER_ID!, isBot: true });
+          const botRes = await axios.post("https://listee-backend.onrender.com/api/messages", { text: botQuestions[questionIndex].answer, senderId: ASTRO_ID!, receiverId: CURRENT_USER_ID!, isBot: true });
           setIsTyping(false);
           setMessages(prev => [...prev, botRes.data.message]);
           socket.emit("sendMessage", botRes.data.message);

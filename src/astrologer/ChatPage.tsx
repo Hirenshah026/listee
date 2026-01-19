@@ -13,7 +13,7 @@ interface Message {
   receiverId: string;
   createdAt?: string;
   isBot?: boolean;
-  isRead?: boolean;
+  read?: boolean; // ✅ isRead ko 'read' kar diya
 }
 
 const ChatPage = () => {
@@ -44,36 +44,46 @@ const ChatPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const callOverlayRef = useRef<any>(null);
 
-  // ✅ Important Logic: Agar time bacha hai YA plan active hai, dono case mein chat chalegi
-  const canChat = timeLeft > 0 || isPlanActive === true;
+  const canChat = (timeLeft > 0) || (isPlanActive === true);
 
+  // --- Mark Read Logic ---
   const markAsRead = async (sId: string, rId: string) => {
+    if (!sId || !rId) return;
     try {
       await axios.post(`${API_URL}/api/messages/mark-read`, { senderId: sId, receiverId: rId });
       socket.emit("messages-read", { senderId: sId, receiverId: rId });
-    } catch (err) { console.error("Read update error:", err); }
+    } catch (err) { 
+      console.error("Read update error:", err); 
+    }
   };
 
   useEffect(() => {
     if (userLoading || !user || !ASTRO_ID || !CURRENT_USER_ID) return;
 
-    // ✅ Check if user has an active plan (subscription) from user object
-    if (user.isPlanActive || user.subscriptionStatus === "active") {
+    if (user.isPlanActive === true || user.subscriptionStatus === "active") {
       setIsPlanActive(true);
     }
 
     if (!socket.connected) socket.connect();
     socket.emit("join", CURRENT_USER_ID);
-    socket.emit("start-chat-timer", { userId: CURRENT_USER_ID, astroId: ASTRO_ID, initialTime: user.freeChatTime || 0 });
+    
+    socket.emit("start-chat-timer", { 
+      userId: CURRENT_USER_ID, 
+      astroId: ASTRO_ID, 
+      initialTime: user.freeChatTime || 0 
+    });
 
     const onReceive = (msg: Message) => {
       setMessages((prev) => (prev.some((m) => m._id === msg._id) ? prev : [...prev, msg]));
-      if (msg.senderId === ASTRO_ID) markAsRead(ASTRO_ID, CURRENT_USER_ID);
+      if (msg.senderId === ASTRO_ID) {
+        markAsRead(ASTRO_ID, CURRENT_USER_ID);
+      }
     };
 
-    const handleReadUpdate = ({ receiverId }: { receiverId: string }) => {
-      if (receiverId === ASTRO_ID) {
-        setMessages(prev => prev.map(m => m.senderId === CURRENT_USER_ID ? { ...m, isRead: true } : m));
+    const handleReadUpdate = ({ senderId, receiverId }: { senderId: string, receiverId: string }) => {
+      // ✅ Yahan 'read' property update ho rahi hai
+      if (senderId === CURRENT_USER_ID && receiverId === ASTRO_ID) {
+        setMessages(prev => prev.map(m => m.senderId === CURRENT_USER_ID ? { ...m, read: true } : m));
       }
     };
 
@@ -82,8 +92,7 @@ const ChatPage = () => {
     socket.on("timer-update", (data) => setTimeLeft(data.timeLeft * 1000));
     socket.on("timer-ended", () => { 
         setTimeLeft(0); 
-        // Timer khatam hone par plan check dobara karenge
-        if (!user.isPlanActive) setIsPlanActive(false); 
+        if (user.isPlanActive !== true) setIsPlanActive(false);
     });
 
     return () => {
@@ -116,12 +125,7 @@ const ChatPage = () => {
 
   const sendMessage = async (customText?: string) => {
     const textToSend = customText || input;
-    
-    // Yahan canChat check ho raha hai
-    if ((!textToSend.trim() && !selectedFile) || !canChat) {
-        if(!canChat) alert("Please recharge or activate a plan to continue chatting.");
-        return;
-    }
+    if ((!textToSend.trim() && !selectedFile) || !canChat) return;
 
     const tempText = textToSend;
     setInput(""); 
@@ -152,7 +156,6 @@ const ChatPage = () => {
       setMessages(prev => [...prev, savedUserMsg]);
       socket.emit("sendMessage", savedUserMsg);
 
-      // Bot logic only triggers for free/timed chat, usually not for paid plans
       if (timeLeft > 0 && questionIndex < botQuestions.length) {
         setTimeout(() => setIsTyping(true), 1000);
         setTimeout(async () => {
@@ -205,9 +208,9 @@ const ChatPage = () => {
               <img src={astrologer?.image || "/banners/astrouser.jpg"} className="w-11 h-11 rounded-full border-2 border-white object-cover" alt="astro" />
               <div>
                 <p className="font-bold text-[15px] leading-tight">{astrologer?.name}</p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center">
                     {isPlanActive ? (
-                        <span className="text-[10px] bg-green-600 text-white px-1.5 rounded-full font-bold">PLAN ACTIVE</span>
+                        <span className="text-[9px] bg-green-700 text-white px-2 py-0.5 rounded-full font-bold uppercase">Plan Active</span>
                     ) : (
                         <p className="text-[10px] font-bold uppercase">⏱️ {Math.floor(timeLeft/60000)}:{(Math.floor(timeLeft/1000)%60).toString().padStart(2,'0')}</p>
                     )}
@@ -236,8 +239,9 @@ const ChatPage = () => {
                             <p className="text-[10px] text-gray-400 font-medium uppercase">
                               {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : ''}
                             </p>
+                            {/* ✅ UI mein 'read' check kar raha hai */}
                             {isMe && !m.isBot && (
-                                <div className={`flex items-center ml-1 ${m.isRead ? "text-blue-500" : "text-gray-400"}`}>
+                                <div className={`flex items-center ml-1 ${m.read ? "text-blue-500" : "text-gray-400"}`}>
                                     <span className="text-[14px] font-bold">✓</span>
                                     <span className="text-[14px] font-bold -ml-1.5">✓</span>
                                 </div>
@@ -269,7 +273,7 @@ const ChatPage = () => {
                 }
               }} 
               className="flex-1 bg-transparent border-none outline-none py-1.5" 
-              placeholder={canChat ? "Type a message..." : "Chat ended - Activate Plan"} 
+              placeholder={canChat ? "Type a message..." : "Chat Ended"} 
             />
           </div>
           <button 

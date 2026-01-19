@@ -13,7 +13,7 @@ interface Message {
   receiverId: string;
   createdAt?: string;
   isBot?: boolean;
-  read?: boolean; 
+  isRead?: boolean;
 }
 
 const ChatPage = () => {
@@ -67,7 +67,7 @@ const ChatPage = () => {
 
     const handleReadUpdate = ({ receiverId }: { receiverId: string }) => {
       if (receiverId === ASTRO_ID) {
-        setMessages(prev => prev.map(m => m.senderId === CURRENT_USER_ID ? { ...m, read: true } : m));
+        setMessages(prev => prev.map(m => m.senderId === CURRENT_USER_ID ? { ...m, isRead: true } : m));
       }
     };
 
@@ -88,7 +88,6 @@ const ChatPage = () => {
   useEffect(() => {
     if (!CURRENT_USER_ID || !ASTRO_ID) return;
     
-    // Fetch Messages
     axios.get(`${API_URL}/api/messages/${CURRENT_USER_ID}/${ASTRO_ID}`).then(res => {
       if (res.data.messages) {
         setMessages(res.data.messages);
@@ -97,20 +96,28 @@ const ChatPage = () => {
       setInitialLoadDone(true);
     });
 
-    // Fetch Bot Questions
     axios.get(`${API_URL}/api/questions`).then(res => {
       if (res.data.success) setBotQuestions(res.data.questions);
     });
   }, [CURRENT_USER_ID, ASTRO_ID]);
 
-  useLayoutEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isTyping]);
+  useLayoutEffect(() => { 
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" }); 
+  }, [messages, isTyping]);
 
   const sendMessage = async (customText?: string) => {
     const textToSend = customText || input;
     if ((!textToSend.trim() && !selectedFile) || !canChat) return;
 
     const tempText = textToSend;
-    setInput(""); setSelectedFile(null); setImagePreview(null);
+    setInput(""); 
+    setSelectedFile(null); 
+    setImagePreview(null);
+
+    // Keep focus on input after sending
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
 
     try {
       let savedUserMsg;
@@ -132,7 +139,6 @@ const ChatPage = () => {
       setMessages(prev => [...prev, savedUserMsg]);
       socket.emit("sendMessage", savedUserMsg);
 
-      // --- BOT LOGIC WAPAS ADD KIYA ---
       if (timeLeft > 0 && questionIndex < botQuestions.length) {
         setTimeout(() => setIsTyping(true), 1000);
         setTimeout(async () => {
@@ -149,10 +155,12 @@ const ChatPage = () => {
           setQuestionIndex(prev => prev + 1);
         }, 2500);
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err); 
+      inputRef.current?.focus();
+    }
   };
 
-  // Date aur Time Helper Functions
   const renderDateLabel = (dateStr: string, prevDateStr?: string) => {
     const d = new Date(dateStr).toLocaleDateString();
     const prevD = prevDateStr ? new Date(prevDateStr).toLocaleDateString() : null;
@@ -209,7 +217,7 @@ const ChatPage = () => {
                               {new Date(m.createdAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </p>
                             {isMe && !m.isBot && (
-                                <div className={`flex items-center ml-1 ${m.read ? "text-blue-500" : "text-gray-400"}`}>
+                                <div className={`flex items-center ml-1 ${m.isRead ? "text-blue-500" : "text-gray-400"}`}>
                                     <span className="text-[14px] font-bold">✓</span>
                                     <span className="text-[14px] font-bold -ml-1.5">✓</span>
                                 </div>
@@ -228,12 +236,31 @@ const ChatPage = () => {
         <footer className="flex-none p-3 pb-6 bg-[#f0f2f5] flex items-center gap-2 border-t z-[100]">
           <div className="flex-1 bg-white rounded-3xl flex items-center px-3 py-1.5 border border-gray-200 shadow-sm">
             <button onClick={() => fileInputRef.current?.click()} className="text-xl text-gray-500 mr-2 rotate-45">📎</button>
-            <input ref={inputRef} type="text" value={input} disabled={!canChat} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} className="flex-1 bg-transparent border-none outline-none py-1.5" placeholder={canChat ? "Type a message..." : "Chat ended"} />
+            <input 
+              ref={inputRef} 
+              type="text" 
+              value={input} 
+              disabled={!canChat} 
+              onChange={(e) => setInput(e.target.value)} 
+              onKeyDown={(e) => {
+                if(e.key === 'Enter') {
+                  e.preventDefault(); 
+                  sendMessage();
+                }
+              }} 
+              className="flex-1 bg-transparent border-none outline-none py-1.5" 
+              placeholder={canChat ? "Type a message..." : "Chat ended"} 
+            />
           </div>
-          <button onClick={() => sendMessage()} className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${canChat ? 'bg-[#00a884]' : 'bg-gray-400'}`}>➤</button>
+          <button 
+            onMouseDown={(e) => e.preventDefault()} // Stops focus from leaving input
+            onClick={() => sendMessage()} 
+            className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${canChat ? 'bg-[#00a884]' : 'bg-gray-400'}`}
+          >
+            ➤
+          </button>
         </footer>
 
-        {/* Modals same as before... */}
         {showProfileModal && (
           <div className="fixed inset-0 bg-black/95 z-[500] flex flex-col items-center justify-center p-4" onClick={() => setShowProfileModal(false)}>
             <img src={astrologer?.image || "/banners/astrouser.jpg"} className="max-w-full max-h-[70vh] object-contain rounded-lg" alt="astro profile" />
@@ -261,6 +288,4 @@ const ChatPage = () => {
   );
 };
 
-
 export default ChatPage;
-

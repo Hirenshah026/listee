@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Routes, Route } from "react-router";
 import ProtectedRoute from "./components/pr/ProtectedRoute";
 import StaffProtectedRoute from "./components/pr/StaffProtectedRoute";
 
@@ -47,6 +47,9 @@ import HomePage from "./astrologer/HomePage";
 import ProfilePage from "./astrologer/ProfilePage";
 import ChatPage from "./astrologer/ChatPage";
 import AstrologerChatPage from "./astrologer/AstrologerChatPage";
+import AstroLiveHost from "./astrologer/AstroLiveHost";
+import UserLiveList from "./astrologer/UserLiveList";
+import LiveCallPage from "./astrologer/LiveCallPage";
 export default function App() {
   return (
     <Router >
@@ -70,6 +73,9 @@ export default function App() {
         <Route path="astro/profile" element={<ProfilePage />} />
         <Route path="astro/chat" element={<ChatPage />} />
         <Route path="astro/chat/user" element={<AstrologerChatPage />} />
+        <Route path="astro/live" element={<AstroLiveHost />} />
+        <Route path="astro/live/user" element={<UserLiveList />} />
+        <Route path="/live-call/:astroId" element={<LiveCallPage />} />
         {/* PROTECTED ROUTES */}
         <Route
           path="/doctor-panel/*"

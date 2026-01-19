@@ -8,7 +8,7 @@ const BottomNav = () => {
   const tabs = [
     { label: "Home", icon: HomeIcon, path: "/astro/home" },
     { label: "Chat", icon: ChatBubbleOvalLeftIcon, path: role === "astro" ? "/astro/chat/user" : "/astro/list" },
-    { label: "Live", icon: VideoCameraIcon, path: "/live" },
+    { label: "Live", icon: VideoCameraIcon, path: role === "astro" ? "/astro/live" : "/astro/live/user" },
     { label: "Call", icon: PhoneIcon, path: "/call" },
     { label: "Remedies", icon: SparklesIcon, path: "/remedies" },
   ];

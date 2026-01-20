@@ -4,7 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <script>
+      (function () {
+        var path = window.location.pathname;
+        var hash = window.location.hash;
 
+        // If no hash but path exists → redirect to hash version
+        if (!hash && path !== "/") {
+          window.location.replace("/#" + path);
+        }
+      })();
+    </script>
   </head>
   <body class="dark:bg-gray-900">
     <div id="root"></div>

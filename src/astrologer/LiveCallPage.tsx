@@ -5,36 +5,86 @@ import socket from "../components/chat/socket";
 const LiveCallPage = () => {
   const { astroId } = useParams();
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const pc = useRef<RTCPeerConnection | null>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const astroSocketIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    pc.current = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+    // ✅ CONNECT SOCKET
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-    pc.current.ontrack = (event) => {
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0];
+    // ✅ CREATE PEER
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        {
+          urls: "turn:openrelay.metered.ca:80",
+          username: "openrelayproject",
+          credential: "openrelayproject"
+        }
+      ]
+    });
+
+    pcRef.current = pc;
+
+    // ✅ RECEIVE REMOTE STREAM
+    pc.ontrack = (event) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
     };
 
+    // ✅ SEND ICE TO ASTRO SOCKET (NOT astroId)
+    pc.onicecandidate = (event) => {
+      if (event.candidate && astroSocketIdRef.current) {
+        socket.emit("ice-candidate", {
+          to: astroSocketIdRef.current,
+          candidate: event.candidate
+        });
+      }
+    };
+
+    // ✅ JOIN LIVE ROOM
     socket.emit("join-live-room", { astroId });
 
+    // ✅ RECEIVE OFFER
     socket.on("offer-from-astro", async ({ offer, from }) => {
-      await pc.current?.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await pc.current?.createAnswer();
-      await pc.current?.setLocalDescription(answer);
-      socket.emit("answer-to-astro", { to: from, answer });
+      astroSocketIdRef.current = from;
+
+      await pc.setRemoteDescription(offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      socket.emit("answer-to-astro", {
+        to: from,
+        answer
+      });
     });
 
-    socket.on("ice-candidate", (data) => {
-      pc.current?.addIceCandidate(new RTCIceCandidate(data.candidate));
+    // ✅ RECEIVE ICE FROM ASTRO
+    socket.on("ice-candidate", ({ candidate }) => {
+      if (candidate) {
+        pc.addIceCandidate(candidate);
+      }
     });
 
-    return () => { socket.off("offer-from-astro"); pc.current?.close(); };
+    return () => {
+      socket.off("offer-from-astro");
+      socket.off("ice-candidate");
+      pc.close();
+    };
   }, [astroId]);
 
   return (
-    <div className="h-screen bg-black flex flex-col items-center justify-center relative">
-       <video ref={remoteVideoRef} autoPlay playsInline className="w-full max-w-[450px] h-full object-cover" />
-       <div className="absolute top-10 left-10 bg-red-600 px-3 py-1 rounded text-white font-bold animate-pulse">LIVE</div>
-       <button onClick={() => window.history.back()} className="absolute top-10 right-10 text-white text-2xl">✕</button>
+    <div className="h-screen bg-black flex items-center justify-center">
+      <video
+        ref={remoteVideoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full max-w-[450px] h-full object-cover"
+      />
     </div>
   );
 };

@@ -24,35 +24,41 @@ const AstroLiveHost = () => {
   };
 
   useEffect(() => {
-    socket.on("new-viewer", async ({ viewerSocketId }) => {
-      if (!streamRef.current) return;
+  socket.on("new-viewer", ({ viewerSocketId }) => {
+    console.log("👀 New viewer:", viewerSocketId);
 
-      const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          {
-            urls: "turn:openrelay.metered.ca:80",
-            username: "openrelayproject",
-            credential: "openrelayproject",
-          },
-        ],
-      });
+    if (!streamRef.current) return;
 
-      pcs.current[viewerSocketId] = pc;
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        {
+          urls: "turn:openrelay.metered.ca:80",
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
+      ],
+    });
 
-      streamRef.current.getTracks().forEach((track) =>
-        pc.addTrack(track, streamRef.current!)
-      );
+    pcs.current[viewerSocketId] = pc;
 
-      pc.onicecandidate = (e) => {
-        if (e.candidate) {
-          socket.emit("ice-candidate", {
-            to: viewerSocketId,
-            candidate: e.candidate,
-          });
-        }
-      };
+    // ✅ ADD TRACKS FIRST
+    streamRef.current.getTracks().forEach((track) => {
+      pc.addTrack(track, streamRef.current!);
+    });
 
+    // ✅ ICE
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ice-candidate", {
+          to: viewerSocketId,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    // ✅ THIS IS THE FIX
+    pc.onnegotiationneeded = async () => {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -60,22 +66,26 @@ const AstroLiveHost = () => {
         to: viewerSocketId,
         offer,
       });
-    });
-
-    socket.on("answer-from-viewer", async ({ from, answer }) => {
-      await pcs.current[from]?.setRemoteDescription(answer);
-    });
-
-    socket.on("ice-candidate", ({ from, candidate }) => {
-      pcs.current[from]?.addIceCandidate(candidate);
-    });
-
-    return () => {
-      socket.off("new-viewer");
-      socket.off("answer-from-viewer");
-      socket.off("ice-candidate");
     };
-  }, []);
+  });
+
+  socket.on("answer-from-viewer", async ({ from, answer }) => {
+    console.log("✅ Answer received from viewer");
+    await pcs.current[from]?.setRemoteDescription(answer);
+  });
+
+  socket.on("ice-candidate", ({ from, candidate }) => {
+    if (candidate) {
+      pcs.current[from]?.addIceCandidate(candidate);
+    }
+  });
+
+  return () => {
+    socket.off("new-viewer");
+    socket.off("answer-from-viewer");
+    socket.off("ice-candidate");
+  };
+}, []);
 
   return (
     <div className="h-screen bg-black flex flex-col items-center justify-center">

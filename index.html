@@ -6,13 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <script>
       (function () {
-        var path = window.location.pathname;
-        var hash = window.location.hash;
+        var { pathname, hash, search } = window.location;
 
-        // If no hash but path exists → redirect to hash version
-        if (!hash && path !== "/") {
-          window.location.replace("/#" + path);
-        }
+        // ignore root
+        if (hash || pathname === "/" || pathname === "/index.html") return;
+
+        // detect base path (for cPanel subfolder)
+        var base = document
+          .querySelector("script[type='module']")
+          ?.getAttribute("src")
+          ?.split("/assets/")[0] || "";
+
+        // redirect preserving query params
+        window.location.replace(base + "/#"+ pathname + search);
       })();
     </script>
   </head>

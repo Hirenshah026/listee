@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/live-call/:astroId",
+      "destination": "/#/live-call/:astroId",
+      "permanent": false
+    }
+  ]
+}

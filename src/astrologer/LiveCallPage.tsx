@@ -4,19 +4,18 @@ import socket from "../components/chat/socket";
 
 const LiveCallPage = () => {
   const { astroId } = useParams<{ astroId: string }>();
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
-  const astroSocketIdRef = useRef<string | null>(null);
+  const astroSocketRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!socket.connected) socket.connect();
 
-    // 🔹 Unique viewer ID
+    // ✅ REGISTER VIEWER
     const viewerId = `viewer-${Date.now()}`;
-    console.log("👀 Viewer ID:", viewerId);
     socket.emit("join", viewerId);
 
-    // 🔹 Create PeerConnection
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -27,35 +26,38 @@ const LiveCallPage = () => {
         },
       ],
     });
+
     pcRef.current = pc;
 
-    // 🔹 Remote stream
+    // ✅ FIX: COLLECT TRACKS PROPERLY
+    const remoteStream = new MediaStream();
+
     pc.ontrack = (event) => {
-      console.log("🎥 Remote stream received");
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
+      console.log("🎥 Track received:", event.track.kind);
+      remoteStream.addTrack(event.track);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = remoteStream;
       }
     };
 
-    // 🔹 ICE candidate from viewer → astro
     pc.onicecandidate = (event) => {
-      if (event.candidate && astroSocketIdRef.current) {
+      if (event.candidate && astroSocketRef.current) {
         socket.emit("ice-candidate", {
-          to: astroSocketIdRef.current,
+          to: astroSocketRef.current,
           candidate: event.candidate,
         });
       }
     };
 
-    // 🔹 Join live room
     socket.emit("join-live-room", { astroId });
 
-    // 🔹 Offer from astro
     socket.on("offer-from-astro", async ({ offer, from }) => {
-      console.log("📡 Offer received from astro");
-      astroSocketIdRef.current = from;
+      console.log("📡 Offer received");
 
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      astroSocketRef.current = from;
+
+      await pc.setRemoteDescription(offer);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
@@ -63,12 +65,13 @@ const LiveCallPage = () => {
         to: from,
         answer,
       });
+
+      console.log("📤 Answer sent");
     });
 
-    // 🔹 ICE candidate from astro
     socket.on("ice-candidate", ({ candidate }) => {
       if (candidate) {
-        pc.addIceCandidate(new RTCIceCandidate(candidate));
+        pc.addIceCandidate(candidate);
       }
     });
 
@@ -82,11 +85,11 @@ const LiveCallPage = () => {
   return (
     <div className="h-screen bg-black flex items-center justify-center">
       <video
-        ref={remoteVideoRef}
+        ref={videoRef}
         autoPlay
         playsInline
-        muted
-        className="w-full max-w-[450px] h-full object-cover"
+        muted={false}
+        className="h-full"
       />
     </div>
   );

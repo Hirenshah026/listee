@@ -1,16 +1,19 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import socket from "../components/chat/socket";
 
-const ASTRO_ID = "6958bc243adbac9b1c1da23a"; // REAL DB _id
+const ASTRO_ID = "PUT_REAL_ASTRO_DB_ID_HERE";
 
 const AstroLiveHost = () => {
   const [isLive, setIsLive] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const pcs = useRef<Record<string, RTCPeerConnection>>({});
+  const pcsRef = useRef<Record<string, RTCPeerConnection>>({});
 
+  /* ---------------- START LIVE ---------------- */
   const startLive = async () => {
     if (!socket.connected) socket.connect();
+
     socket.emit("join", ASTRO_ID);
 
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -19,46 +22,51 @@ const AstroLiveHost = () => {
     });
 
     streamRef.current = stream;
-    if (videoRef.current) videoRef.current.srcObject = stream;
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+
     setIsLive(true);
+    console.log("🔴 Astro LIVE");
   };
 
+  /* ---------------- SOCKET ---------------- */
   useEffect(() => {
-  socket.on("new-viewer", ({ viewerSocketId }) => {
-    console.log("👀 New viewer:", viewerSocketId);
+    const handleNewViewer = async ({ viewerSocketId }: { viewerSocketId: string }) => {
+      console.log("👀 New viewer:", viewerSocketId);
 
-    if (!streamRef.current) return;
+      if (!streamRef.current) return;
 
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        {
-          urls: "turn:openrelay.metered.ca:80",
-          username: "openrelayproject",
-          credential: "openrelayproject",
-        },
-      ],
-    });
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          {
+            urls: "turn:openrelay.metered.ca:80",
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+        ],
+      });
 
-    pcs.current[viewerSocketId] = pc;
+      pcsRef.current[viewerSocketId] = pc;
 
-    // ✅ ADD TRACKS FIRST
-    streamRef.current.getTracks().forEach((track) => {
-      pc.addTrack(track, streamRef.current!);
-    });
+      // ✅ ADD TRACKS FIRST
+      streamRef.current.getTracks().forEach(track => {
+        pc.addTrack(track, streamRef.current!);
+      });
 
-    // ✅ ICE
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("ice-candidate", {
-          to: viewerSocketId,
-          candidate: event.candidate,
-        });
-      }
-    };
+      // ✅ ICE
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          socket.emit("ice-candidate", {
+            to: viewerSocketId,
+            candidate: e.candidate,
+          });
+        }
+      };
 
-    // ✅ THIS IS THE FIX
-    pc.onnegotiationneeded = async () => {
+      // ✅ CREATE OFFER IMMEDIATELY (NO negotiationneeded)
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -66,32 +74,57 @@ const AstroLiveHost = () => {
         to: viewerSocketId,
         offer,
       });
+
+      console.log("📤 Offer sent to viewer");
     };
-  });
 
-  socket.on("answer-from-viewer", async ({ from, answer }) => {
-    console.log("✅ Answer received from viewer");
-    await pcs.current[from]?.setRemoteDescription(answer);
-  });
+    const handleAnswer = async ({ from, answer }: any) => {
+      console.log("📩 Answer received");
 
-  socket.on("ice-candidate", ({ from, candidate }) => {
-    if (candidate) {
-      pcs.current[from]?.addIceCandidate(candidate);
-    }
-  });
+      const pc = pcsRef.current[from];
+      if (!pc) return;
 
-  return () => {
-    socket.off("new-viewer");
-    socket.off("answer-from-viewer");
-    socket.off("ice-candidate");
-  };
-}, []);
+      await pc.setRemoteDescription(answer);
+    };
 
+    const handleIce = ({ from, candidate }: any) => {
+      const pc = pcsRef.current[from];
+      if (pc && candidate) {
+        pc.addIceCandidate(candidate);
+      }
+    };
+
+    socket.on("new-viewer", handleNewViewer);
+    socket.on("answer-from-viewer", handleAnswer);
+    socket.on("ice-candidate", handleIce);
+
+    return () => {
+      socket.off("new-viewer", handleNewViewer);
+      socket.off("answer-from-viewer", handleAnswer);
+      socket.off("ice-candidate", handleIce);
+
+      Object.values(pcsRef.current).forEach(pc => pc.close());
+      pcsRef.current = {};
+    };
+  }, []);
+
+  /* ---------------- UI ---------------- */
   return (
     <div className="h-screen bg-black flex flex-col items-center justify-center">
-      <video ref={videoRef} autoPlay muted playsInline className="h-[70vh]" />
-      <button onClick={startLive} className="mt-6 px-6 py-3 bg-yellow-500">
-        GO LIVE
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        className="h-[70vh]"
+      />
+
+      <button
+        onClick={startLive}
+        disabled={isLive}
+        className="mt-6 px-6 py-3 bg-yellow-500 text-black rounded"
+      >
+        {isLive ? "LIVE" : "GO LIVE"}
       </button>
     </div>
   );

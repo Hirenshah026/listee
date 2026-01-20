@@ -1,4 +1,4 @@
-import { BrowserRouter as hasRouter, Routes, Route } from "react-router";
+import { HashRouter as Router, Routes, Route } from "react-router";
 import ProtectedRoute from "./components/pr/ProtectedRoute";
 import StaffProtectedRoute from "./components/pr/StaffProtectedRoute";
 

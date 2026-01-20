@@ -1,57 +1,31 @@
 import React, { useState, useRef, useEffect } from "react";
 import socket from "../components/chat/socket";
 
-const ASTRO_ID = "ASTRO_ID_HERE"; // ✅ MUST be real astro _id
+const ASTRO_ID = "ASTRO_ID_HERE"; // REAL DB _id
 
 const AstroLiveHost = () => {
   const [isLive, setIsLive] = useState(false);
-
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
-  // viewerSocketId => PeerConnection
   const pcs = useRef<Record<string, RTCPeerConnection>>({});
 
-  /* ---------------- START LIVE ---------------- */
   const startLive = async () => {
-    try {
-      // ✅ CONNECT & REGISTER ASTRO
-      if (!socket.connected) socket.connect();
-      socket.emit("join", ASTRO_ID);
+    if (!socket.connected) socket.connect();
+    socket.emit("join", ASTRO_ID);
 
-      // ✅ GET CAMERA
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
 
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-
-      setIsLive(true);
-      console.log("🔴 Astro LIVE:", ASTRO_ID);
-    } catch (err) {
-      console.error("❌ Camera error:", err);
-    }
+    streamRef.current = stream;
+    if (videoRef.current) videoRef.current.srcObject = stream;
+    setIsLive(true);
   };
 
-  /* ---------------- SOCKET EVENTS ---------------- */
   useEffect(() => {
-    // 👀 NEW VIEWER
-    const handleNewViewer = async ({
-      viewerSocketId,
-    }: {
-      viewerSocketId: string;
-    }) => {
-      console.log("👀 New viewer:", viewerSocketId);
-
-      if (!streamRef.current) {
-        console.warn("⚠️ Stream not ready yet");
-        return;
-      }
+    socket.on("new-viewer", async ({ viewerSocketId }) => {
+      if (!streamRef.current) return;
 
       const pc = new RTCPeerConnection({
         iceServers: [
@@ -66,22 +40,19 @@ const AstroLiveHost = () => {
 
       pcs.current[viewerSocketId] = pc;
 
-      // ✅ ADD LOCAL TRACKS
-      streamRef.current.getTracks().forEach((track) => {
-        pc.addTrack(track, streamRef.current!);
-      });
+      streamRef.current.getTracks().forEach((track) =>
+        pc.addTrack(track, streamRef.current!)
+      );
 
-      // ✅ SEND ICE
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
           socket.emit("ice-candidate", {
             to: viewerSocketId,
-            candidate: event.candidate,
+            candidate: e.candidate,
           });
         }
       };
 
-      // ✅ CREATE OFFER AFTER TRACKS
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -89,73 +60,28 @@ const AstroLiveHost = () => {
         to: viewerSocketId,
         offer,
       });
-    };
+    });
 
-    // 📩 ANSWER FROM VIEWER
-    const handleAnswer = async ({
-      from,
-      answer,
-    }: {
-      from: string;
-      answer: RTCSessionDescriptionInit;
-    }) => {
-      console.log("📩 Answer from:", from);
+    socket.on("answer-from-viewer", async ({ from, answer }) => {
+      await pcs.current[from]?.setRemoteDescription(answer);
+    });
 
-      const pc = pcs.current[from];
-      if (!pc) return;
-
-      await pc.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
-    };
-
-    // ❄️ ICE FROM VIEWER
-    const handleIce = ({
-      from,
-      candidate,
-    }: {
-      from: string;
-      candidate: RTCIceCandidateInit;
-    }) => {
-      const pc = pcs.current[from];
-      if (pc && candidate) {
-        pc.addIceCandidate(new RTCIceCandidate(candidate));
-      }
-    };
-
-    socket.on("new-viewer", handleNewViewer);
-    socket.on("answer-from-viewer", handleAnswer);
-    socket.on("ice-candidate", handleIce);
+    socket.on("ice-candidate", ({ from, candidate }) => {
+      pcs.current[from]?.addIceCandidate(candidate);
+    });
 
     return () => {
-      socket.off("new-viewer", handleNewViewer);
-      socket.off("answer-from-viewer", handleAnswer);
-      socket.off("ice-candidate", handleIce);
-
-      Object.values(pcs.current).forEach((pc) => pc.close());
-      pcs.current = {};
+      socket.off("new-viewer");
+      socket.off("answer-from-viewer");
+      socket.off("ice-candidate");
     };
   }, []);
 
-  /* ---------------- UI ---------------- */
   return (
-    <div className="flex flex-col items-center bg-black h-screen justify-center text-white">
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        className="w-full max-w-[450px] h-[70vh] object-cover rounded-2xl border-2 border-yellow-500"
-      />
-
-      <button
-        onClick={startLive}
-        disabled={isLive}
-        className={`mt-10 px-10 py-4 rounded-full font-bold ${
-          isLive ? "bg-red-600" : "bg-yellow-500 text-black"
-        }`}
-      >
-        {isLive ? "LIVE NOW" : "GO LIVE"}
+    <div className="h-screen bg-black flex flex-col items-center justify-center">
+      <video ref={videoRef} autoPlay muted playsInline className="h-[70vh]" />
+      <button onClick={startLive} className="mt-6 px-6 py-3 bg-yellow-500">
+        GO LIVE
       </button>
     </div>
   );

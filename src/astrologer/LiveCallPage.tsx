@@ -4,22 +4,19 @@ import socket from "../components/chat/socket";
 
 const LiveCallPage = () => {
   const { astroId } = useParams<{ astroId: string }>();
-
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const astroSocketIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    /* ---------------- SOCKET CONNECT ---------------- */
-    if (!socket.connected) {
-      socket.connect();
-    }
+    if (!socket.connected) socket.connect();
 
-    // ✅ REGISTER VIEWER (MANDATORY)
+    // 🔹 Unique viewer ID
     const viewerId = `viewer-${Date.now()}`;
+    console.log("👀 Viewer ID:", viewerId);
     socket.emit("join", viewerId);
 
-    /* ---------------- PEER CONNECTION ---------------- */
+    // 🔹 Create PeerConnection
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -30,10 +27,9 @@ const LiveCallPage = () => {
         },
       ],
     });
-
     pcRef.current = pc;
 
-    /* ---------------- REMOTE STREAM ---------------- */
+    // 🔹 Remote stream
     pc.ontrack = (event) => {
       console.log("🎥 Remote stream received");
       if (remoteVideoRef.current) {
@@ -41,7 +37,7 @@ const LiveCallPage = () => {
       }
     };
 
-    /* ---------------- SEND ICE ---------------- */
+    // 🔹 ICE candidate from viewer → astro
     pc.onicecandidate = (event) => {
       if (event.candidate && astroSocketIdRef.current) {
         socket.emit("ice-candidate", {
@@ -51,13 +47,12 @@ const LiveCallPage = () => {
       }
     };
 
-    /* ---------------- JOIN LIVE ---------------- */
+    // 🔹 Join live room
     socket.emit("join-live-room", { astroId });
 
-    /* ---------------- RECEIVE OFFER ---------------- */
+    // 🔹 Offer from astro
     socket.on("offer-from-astro", async ({ offer, from }) => {
       console.log("📡 Offer received from astro");
-
       astroSocketIdRef.current = from;
 
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -70,14 +65,13 @@ const LiveCallPage = () => {
       });
     });
 
-    /* ---------------- RECEIVE ICE ---------------- */
+    // 🔹 ICE candidate from astro
     socket.on("ice-candidate", ({ candidate }) => {
       if (candidate) {
         pc.addIceCandidate(new RTCIceCandidate(candidate));
       }
     });
 
-    /* ---------------- CLEANUP ---------------- */
     return () => {
       socket.off("offer-from-astro");
       socket.off("ice-candidate");

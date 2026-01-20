@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as hasRouter, Routes, Route } from "react-router";
 import ProtectedRoute from "./components/pr/ProtectedRoute";
 import StaffProtectedRoute from "./components/pr/StaffProtectedRoute";
 
@@ -143,3 +143,4 @@ export default function App() {
 
   );
 }
+

@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("https://aqua-goat-506711.hostingersite.com", {
+const socket = io("https://listee-backend.onrender.com", {
   transports: ["websocket"],
   autoConnect: true,
 });

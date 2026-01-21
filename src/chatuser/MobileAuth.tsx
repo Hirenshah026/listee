@@ -28,7 +28,7 @@ const MobileAuth: React.FC = () => {
       setMessage("");
 
       const res = await axios.post(
-        "https://aqua-goat-506711.hostingersite.com/api/auth/mobile-check",
+        "https://listee-backend.onrender.com/api/auth/mobile-check",
         { mobile }
       );
 

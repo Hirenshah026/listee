@@ -54,7 +54,7 @@ function UploadPhotoModal({ open, onClose, onUploaded }: any) {
 
     try {
       const res = await axios.post(
-        "https://aqua-goat-506711.hostingersite.com/api/doctor-panel-upload-photo",
+        "https://listee-backend.onrender.com/api/doctor-panel-upload-photo",
         formData,
         {
           headers: {
@@ -147,7 +147,7 @@ export default function UserMetaCard() {
   const [profilePreview, setProfilePreview] = useState("");
 
   useEffect(() => {
-    if (user?.profile) setProfilePreview(`https://aqua-goat-506711.hostingersite.com${user.profile}`);
+    if (user?.profile) setProfilePreview(`https://listee-backend.onrender.com${user.profile}`);
   }, [user]);
 
   const handleOpen = () => {
@@ -163,7 +163,7 @@ export default function UserMetaCard() {
   const handleSave = async () => {
     try {
       await axios.put(
-        "https://aqua-goat-506711.hostingersite.com/api/doctor-panel-update-profile",
+        "https://listee-backend.onrender.com/api/doctor-panel-update-profile",
         form,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -177,7 +177,7 @@ export default function UserMetaCard() {
   };
 
   const handlePhotoUploaded = (path: string) => {
-    setProfilePreview(`https://aqua-goat-506711.hostingersite.com${path}`);
+    setProfilePreview(`https://listee-backend.onrender.com${path}`);
     refreshUser();
   };
 

@@ -80,7 +80,7 @@ const AstrologerChatPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const API_URL = "https://aqua-goat-506711.hostingersite.com";
+  const API_URL = "https://listee-backend.onrender.com";
 
   useEffect(() => {
     const handleVisualViewportResize = () => {

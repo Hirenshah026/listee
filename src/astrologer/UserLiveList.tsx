@@ -9,7 +9,7 @@ const UserLiveList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   // API URL
-  const API_URL = "https://aqua-goat-506711.hostingersite.com";
+  const API_URL = "https://listee-backend.onrender.com";
 
   useEffect(() => {
     const fetchAstros = async () => {

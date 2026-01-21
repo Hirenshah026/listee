@@ -7,7 +7,7 @@ import BottomNav from "./components/BottomNav";
 const categories = ["NEW!", "Love", "Education", "Career"];
 
 // ✅ Global API URL
-const API_URL = "https://aqua-goat-506711.hostingersite.com";
+const API_URL = "https://listee-backend.onrender.com";
 
 const AstrologerListPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("NEW!");

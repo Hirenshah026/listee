@@ -10,7 +10,7 @@ interface QA {
   answer: string;
 }
 
-const QA_API = "https://listee-backend.onrender.com/api/questions";
+const QA_API = "aqua-goat-506711.hostingersite.com/api/questions";
 
 const customStyles: TableStyles = {
   headRow: {

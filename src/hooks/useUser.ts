@@ -29,7 +29,7 @@ export default function useUser() {
       }
 
       const res = await axios.get(
-        "https://listee-backend.onrender.com/api/doctor-panel-profile",
+        "aqua-goat-506711.hostingersite.com/api/doctor-panel-profile",
         {
           headers: {
             Authorization: `Bearer ${token}`,

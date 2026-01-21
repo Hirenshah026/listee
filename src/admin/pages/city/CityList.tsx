@@ -14,7 +14,7 @@ interface City {
   show: boolean;
 }
 
-const API_URL = "aqua-goat-506711.hostingersite.com/api/cities";
+const API_URL = "https://aqua-goat-506711.hostingersite.com/api/cities";
 
 /* =======================
    DataTable Custom Styles

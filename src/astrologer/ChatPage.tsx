@@ -24,7 +24,7 @@ const ChatPage = () => {
 
   const CURRENT_USER_ID = user?._id;
   const ASTRO_ID = astrologer?._id;
-  const API_URL = "aqua-goat-506711.hostingersite.com";
+  const API_URL = "https://aqua-goat-506711.hostingersite.com";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

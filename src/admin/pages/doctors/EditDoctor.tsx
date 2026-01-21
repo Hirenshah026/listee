@@ -70,7 +70,7 @@ const EditDoctor = () => {
   const fetchCities = async () => {
     try {
       setLoadingCities(true);
-      const { data } = await axios.get("aqua-goat-506711.hostingersite.com/api/cities");
+      const { data } = await axios.get("https://aqua-goat-506711.hostingersite.com/api/cities");
       if (data.success) {
         setCities(data.cities);
         const options = data.cities.map((c: City) => ({
@@ -89,7 +89,7 @@ const EditDoctor = () => {
   // fetch doctor
   const fetchDoctor = async () => {
     try {
-      const { data } = await axios.get(`aqua-goat-506711.hostingersite.com/api/doctors/${id}`);
+      const { data } = await axios.get(`https://aqua-goat-506711.hostingersite.com/api/doctors/${id}`);
       if (data.success) {
         const doc = data.doctor;
         setFormData({
@@ -147,7 +147,7 @@ const EditDoctor = () => {
       const payload: any = { ...formData };
       if (!payload.password) delete payload.password;
 
-      await axios.patch(`aqua-goat-506711.hostingersite.com/api/doctors/${id}`, payload);
+      await axios.patch(`https://aqua-goat-506711.hostingersite.com/api/doctors/${id}`, payload);
 
       setAlertType("success");
       setAlertMessage("Doctor updated successfully!");

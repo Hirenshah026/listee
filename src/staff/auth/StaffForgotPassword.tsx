@@ -21,7 +21,7 @@ export default function StaffResetPassword() {
     setLoading(true);
     try {
       const res = await axios.post(
-        "aqua-goat-506711.hostingersite.com/api/auth/staff/forgot-password",
+        "https://aqua-goat-506711.hostingersite.com/api/auth/staff/forgot-password",
         { email }
       );
 
@@ -47,7 +47,7 @@ export default function StaffResetPassword() {
 
     try {
       const res = await axios.post(
-        "aqua-goat-506711.hostingersite.com/api/auth/staff/reset-password",
+        "https://aqua-goat-506711.hostingersite.com/api/auth/staff/reset-password",
         { email, newPassword: password }
       );
 

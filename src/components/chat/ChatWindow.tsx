@@ -42,7 +42,7 @@ export default function ChatWindow({ user, onBack }: Props) {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get("aqua-goat-506711.hostingersite.com/api/questions");
+        const res = await axios.get("https://aqua-goat-506711.hostingersite.com/api/questions");
         const qs = Array.isArray(res.data.questions) ? res.data.questions : [];
         setQuestions(qs);
       } catch (err) {

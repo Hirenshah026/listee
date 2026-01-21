@@ -33,9 +33,9 @@ interface MarketingPerson {
 }
 
 /* ================= API ================= */
-const CITY_API = "aqua-goat-506711.hostingersite.com/api/cities";
-const AREA_API = "aqua-goat-506711.hostingersite.com/api/areas";
-const PERSON_API = "aqua-goat-506711.hostingersite.com/api/marketing-persons";
+const CITY_API = "https://aqua-goat-506711.hostingersite.com/api/cities";
+const AREA_API = "https://aqua-goat-506711.hostingersite.com/api/areas";
+const PERSON_API = "https://aqua-goat-506711.hostingersite.com/api/marketing-persons";
 
 /* ================= TABLE STYLE ================= */
 const customStyles: TableStyles = {

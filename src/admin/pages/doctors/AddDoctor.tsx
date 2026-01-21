@@ -64,7 +64,7 @@ const AddDoctor = () => {
   const fetchCities = async () => {
     try {
       setLoadingCities(true);
-      const { data } = await axios.get("aqua-goat-506711.hostingersite.com/api/cities");
+      const { data } = await axios.get("https://aqua-goat-506711.hostingersite.com/api/cities");
       if (data.success) {
         setCities(data.cities);
         const options = data.cities.map((c: City) => ({ label: c.name, value: c._id }));
@@ -137,7 +137,7 @@ const AddDoctor = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        "aqua-goat-506711.hostingersite.com/api/admin/doctor-register",
+        "https://aqua-goat-506711.hostingersite.com/api/admin/doctor-register",
         formData
       );
       setMessage({ type: "success", text: "Doctor Registered Successfully!" });

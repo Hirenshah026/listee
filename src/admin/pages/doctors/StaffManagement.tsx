@@ -35,8 +35,8 @@ interface Role {
   active: boolean;
 }
 
-const API_URL = "aqua-goat-506711.hostingersite.com/api/staff";
-const ROLES_API = "aqua-goat-506711.hostingersite.com/api/roles";
+const API_URL = "https://aqua-goat-506711.hostingersite.com/api/staff";
+const ROLES_API = "https://aqua-goat-506711.hostingersite.com/api/roles";
 
 const StaffManagement = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);

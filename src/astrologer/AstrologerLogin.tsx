@@ -68,7 +68,7 @@ const AstrologerLogin = () => {
       setLoading(true);
       setAlert(null);
 
-      const res = await fetch("aqua-goat-506711.hostingersite.com/api/auth/astro/login", {
+      const res = await fetch("https://aqua-goat-506711.hostingersite.com/api/auth/astro/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

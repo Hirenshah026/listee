@@ -93,7 +93,7 @@ const AstrologerRegister = () => {
       setLoading(true);
       setAlert(null);
 
-      const res = await fetch("aqua-goat-506711.hostingersite.com/api/auth/astro/register", {
+      const res = await fetch("https://aqua-goat-506711.hostingersite.com/api/auth/astro/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, role: "astro" }),

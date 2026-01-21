@@ -114,5 +114,4 @@ const UserLiveList: React.FC = () => {
   );
 };
 
-
 export default UserLiveList;

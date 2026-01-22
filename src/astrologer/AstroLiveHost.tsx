@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import socket from "../components/chat/socket";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
+import { useNavigate } from "react-router-dom";
 
 const AstroLiveHost = () => {
+  const navigate = useNavigate();
   const [isLive, setIsLive] = useState(false);
   const [viewers, setViewers] = useState(0);
   const [messages, setMessages] = useState<any[]>([]);
@@ -15,21 +17,17 @@ const AstroLiveHost = () => {
   const ASTRO_ID = "6958bde63adbac9b1c1da23e";
   const ROOM_ID = `live_room_${ASTRO_ID}`;
 
-  // Auto scroll chat to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    // Viewer count update
     socket.on("update-viewers", (count) => setViewers(count));
     
-    // Receive message for Host (Iske bina host ko chat nahi dikhti)
     socket.on("receive-message", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    // WebRTC Signaling Logic
     socket.on("new-viewer", async ({ viewerId }) => {
       const pc = new RTCPeerConnection({
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -88,6 +86,28 @@ const AstroLiveHost = () => {
     }
   };
 
+  // --- NAYA FUNCTION: STREAM BAND KARNE KE LIYE ---
+  const stopLive = () => {
+    // 1. Server ko batao ki live khatam (taki viewers back ho jayein)
+    socket.emit("end-stream", { astroId: ASTRO_ID });
+
+    // 2. Camera aur Mic band karo
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    // 3. Saare WebRTC connections close karo
+    Object.values(pcs.current).forEach(pc => pc.close());
+    pcs.current = {};
+
+    setIsLive(false);
+    
+    // 4. Optionally wapas bhej do ya refresh karo
+    alert("Live session ended.");
+    navigate("/"); // Ya jahan aap bhej dena chahen
+  };
+
   return (
     <div className="fixed inset-0 bg-black overflow-hidden flex flex-col">
       <div className="z-[100]"><Header /></div>
@@ -107,7 +127,6 @@ const AstroLiveHost = () => {
           </div>
         )}
 
-        {/* Chat List Overlay */}
         <div className="mt-auto mb-28 max-h-[200px] overflow-y-auto pointer-events-auto scrollbar-hide flex flex-col gap-2">
           {messages.map((m, i) => (
             <div key={i} className="bg-black/30 backdrop-blur-md px-3 py-2 rounded-2xl self-start max-w-[80%] border border-white/10">
@@ -121,7 +140,7 @@ const AstroLiveHost = () => {
 
         <div className="pointer-events-auto">
           <button 
-            onClick={isLive ? () => window.location.reload() : startLive}
+            onClick={isLive ? stopLive : startLive}
             className={`w-full py-4 rounded-full font-bold shadow-2xl transition-all ${isLive ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}
           >
             {isLive ? "END STREAM" : "START LIVE SESSION"}

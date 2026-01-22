@@ -31,30 +31,25 @@ const AstroLiveHost = () => {
       
       socket.emit("join", ASTRO_ID);
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) { alert("Camera access denied!"); }
+    } catch (err) { alert("Camera Permission Required"); }
   };
 
   const stopLive = () => {
-    // Backend ko batao stream khatam (Taki viewer wapas chala jaye)
-    socket.emit("end-stream", { astroId: ASTRO_ID });
-    
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
+    if (window.confirm("End this live session?")) {
+      socket.emit("end-stream", { astroId: ASTRO_ID });
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      Object.values(pcs.current).forEach(p => p.close());
+      pcs.current = {};
+      setIsLive(false);
+      setViewers(0);
+      setMessages([]);
     }
-    Object.values(pcs.current).forEach(pc => pc.close());
-    pcs.current = {};
-    setIsLive(false);
-    setViewers(0);
-    setMessages([]);
-    messageIds.current.clear();
   };
 
   useEffect(() => {
     socket.on("update-viewers", (count) => setViewers(count));
 
     socket.on("receive-message", (msg) => {
-      console.log("Host got message:", msg);
       if (!messageIds.current.has(msg.id)) {
         messageIds.current.add(msg.id);
         setMessages((prev) => [...prev, msg]);
@@ -82,29 +77,26 @@ const AstroLiveHost = () => {
       socket.off("update-viewers");
       socket.off("receive-message");
       socket.off("new-viewer");
-      socket.off("answer-from-viewer");
     };
   }, []);
 
   return (
-    <div className="flex justify-center bg-black h-screen overflow-hidden font-sans">
-      <div className="w-full max-w-[450px] flex flex-col relative border-x border-zinc-800 h-full">
+    <div className="flex justify-center bg-black h-screen overflow-hidden">
+      <div className="w-full max-w-[450px] flex flex-col relative h-full border-x border-zinc-800">
         <Header />
-        <main className="flex-1 relative bg-zinc-900 overflow-hidden">
+        <main className="flex-1 relative bg-zinc-950 overflow-hidden flex items-center justify-center">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           
           {isLive && (
-            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-[10px] font-black z-20">
+            <div className="absolute top-4 left-4 bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold z-20 animate-pulse">
               LIVE • {viewers}
             </div>
           )}
 
           <div ref={chatContainerRef} className="absolute bottom-32 left-0 w-full px-4 max-h-[180px] overflow-y-auto z-30 flex flex-col gap-2 scrollbar-hide">
             {messages.map((m, i) => (
-              <div key={m.id || i} className="flex items-start">
-                <div className="bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-white text-[13px]">
-                  <span className="font-bold text-yellow-500 mr-1">{m.user}:</span>{m.text}
-                </div>
+              <div key={m.id || i} className="bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl self-start">
+                <p className="text-[13px] text-white"><span className="font-bold text-yellow-500 mr-1">{m.user}:</span>{m.text}</p>
               </div>
             ))}
           </div>

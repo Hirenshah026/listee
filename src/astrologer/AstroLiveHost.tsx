@@ -11,37 +11,32 @@ const AstroLiveHost = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const pcs = useRef<{ [key: string]: RTCPeerConnection }>({});
 
-  const ASTRO_ID = "6958bde63adbac9b1c1da23e"; 
+  const ASTRO_ID = "6958bde63adbac9b1c1da23e";
 
   const startLive = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
-      setIsLive(true);
       
+      setIsLive(true);
+      // Backend mapping ke liye pehle join bhejo
       socket.emit("join", ASTRO_ID); 
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) { alert("Camera permit kijiye!"); }
+    } catch (err) { alert("Camera access denied!"); }
   };
 
   useEffect(() => {
     socket.on("update-viewers", (count) => setViewers(count));
-    
-    socket.on("receive-message", (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
+    socket.on("receive-message", (msg) => setMessages(prev => [...prev, msg]));
 
     socket.on("new-viewer", async ({ viewerId }) => {
       const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
       pcs.current[viewerId] = pc;
-
       streamRef.current?.getTracks().forEach(t => pc.addTrack(t, streamRef.current!));
 
       pc.onicecandidate = (e) => {
-        if (e.candidate) {
-          socket.emit("ice-candidate", { to: viewerId, candidate: e.candidate });
-        }
+        if (e.candidate) socket.emit("ice-candidate", { to: viewerId, candidate: e.candidate });
       };
 
       const offer = await pc.createOffer();
@@ -74,18 +69,18 @@ const AstroLiveHost = () => {
       <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover z-0" />
       <div className="relative z-10 flex-1 flex flex-col justify-end p-4 pb-32">
         {isLive && <div className="absolute top-24 left-4 bg-red-600 px-2 py-1 rounded text-white text-[10px] font-bold">LIVE • {viewers}</div>}
-        <div className="max-h-[150px] overflow-y-auto flex flex-col gap-2 mb-4 scrollbar-hide pointer-events-auto">
+        <div className="max-h-[150px] overflow-y-auto mb-4 flex flex-col gap-2 scrollbar-hide pointer-events-auto">
           {messages.map((m, i) => (
-            <div key={i} className="bg-black/40 p-2 rounded text-white text-xs self-start">
+            <div key={i} className="bg-black/50 p-2 rounded-lg text-white text-xs self-start border border-white/10">
               <span className="text-yellow-400 font-bold">{m.user}: </span>{m.text}
             </div>
           ))}
         </div>
         <button onClick={isLive ? () => window.location.reload() : startLive} className="w-full py-4 rounded-full font-bold bg-yellow-500 text-black">
-          {isLive ? "STOP LIVE" : "START LIVE"}
+          {isLive ? "STOP STREAM" : "START LIVE SESSION"}
         </button>
       </div>
-      <div className="z-50 bg-black shadow-[0_-10px_20px_rgba(0,0,0,0.5)]"><BottomNav /></div>
+      <div className="z-50 bg-black"><BottomNav /></div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import socket from "../components/chat/socket";
-import { X, Volume2, VolumeX, Users, Star } from "lucide-react"; // Icons ke liye lucide-react use karein
+import { X, Volume2, VolumeX, Users, Star, Send } from "lucide-react"; 
 
 const LiveCallPage = () => {
   const { astroId } = useParams();
@@ -10,31 +10,34 @@ const LiveCallPage = () => {
   const pc = useRef<RTCPeerConnection | null>(null);
   const hostSocketId = useRef<string | null>(null);
   
+  // Refs for signaling and scroll
+  const isSettingRemoteDescription = useRef(false);
+  const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
+  const chatContainerRef = useRef<HTMLDivElement>(null); // Scroll ref
+  const messageIds = useRef(new Set()); // Duplicate check ref
+
   const [isMuted, setIsMuted] = useState(true);
   const [status, setStatus] = useState("Connecting...");
+  const [viewers, setViewers] = useState(0);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
 
-  // Exit Function
-  const handleExit = () => {
-    if (window.confirm("Bhai, kya aap live stream band karna chahte hain?")) {
-      if (pc.current) pc.current.close();
-      navigate(-1); // Pichle page par wapas
+  // 1. Auto-scroll logic
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  };
+  }, [messages]);
 
   useEffect(() => {
-    if (!pc.current) {
-      pc.current = new RTCPeerConnection({ 
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }] 
-      });
-    }
+    pc.current = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    });
 
     pc.current.ontrack = (event) => {
-      console.log("🔥 SUCCESS: Stream received!");
-      if (remoteVideoRef.current) {
-        if (remoteVideoRef.current.srcObject !== event.streams[0]) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-          setStatus("Live");
-        }
+      if (remoteVideoRef.current && remoteVideoRef.current.srcObject !== event.streams[0]) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+        setStatus("Live");
       }
     };
 
@@ -44,54 +47,76 @@ const LiveCallPage = () => {
       }
     };
 
-    const joinRoom = () => {
-      if (status !== "Live") {
-        socket.emit("join-live-room", { astroId });
-      }
-    };
+    const handleOffer = async ({ offer, from }: { offer: any, from: string }) => {
+      if (!pc.current || isSettingRemoteDescription.current) return;
+      if (pc.current.signalingState !== "stable") return;
 
-    const interval = setInterval(() => {
-      if (status === "Live") clearInterval(interval);
-      else joinRoom();
-    }, 3000);
-
-    joinRoom();
-
-    socket.on("offer-from-astro", async ({ offer, from }) => {
-      hostSocketId.current = from;
-      if (pc.current) {
+      try {
+        isSettingRemoteDescription.current = true;
+        hostSocketId.current = from;
         await pc.current.setRemoteDescription(new RTCSessionDescription(offer));
+        
+        while (iceCandidatesQueue.current.length > 0) {
+          const candidate = iceCandidatesQueue.current.shift();
+          if (candidate) await pc.current.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+
         const answer = await pc.current.createAnswer();
         await pc.current.setLocalDescription(answer);
         socket.emit("answer-to-astro", { to: from, answer });
+      } catch (err) {
+        console.error("Signaling Error:", err);
+      } finally {
+        isSettingRemoteDescription.current = false;
+      }
+    };
+
+    // 2. Cleanup and Listeners
+    socket.off("receive-message");
+    socket.off("offer-from-astro");
+
+    socket.on("offer-from-astro", handleOffer);
+    socket.on("update-viewers", (count) => setViewers(count));
+    
+    // Duplicate Message Fix for Viewer
+    socket.on("receive-message", (msg) => {
+      const msgUniqueId = msg.id || `${msg.user}-${msg.text}-${new Date().getTime()}`;
+      if (!messageIds.current.has(msgUniqueId)) {
+        messageIds.current.add(msgUniqueId);
+        setMessages((prev) => [...prev, msg]);
       }
     });
 
     socket.on("ice-candidate", async (data) => {
-      if (data.candidate && pc.current) {
+      if (!data.candidate) return;
+      if (pc.current && pc.current.remoteDescription && !isSettingRemoteDescription.current) {
         await pc.current.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(() => {});
+      } else {
+        iceCandidatesQueue.current.push(data.candidate);
       }
     });
 
+    socket.on("stream-ended", () => navigate(-1));
+    socket.emit("join-live-room", { astroId, role: "viewer" });
+
     return () => {
-      clearInterval(interval);
       socket.off("offer-from-astro");
+      socket.off("update-viewers");
+      socket.off("receive-message");
       socket.off("ice-candidate");
+      socket.off("stream-ended");
+      if (pc.current) pc.current.close();
     };
-  }, [astroId, status]);
+  }, [astroId, navigate]);
 
   return (
     <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans">
       <div className="w-full max-w-[450px] relative bg-black shadow-2xl overflow-hidden flex flex-col">
-        
-        {/* TOP OVERLAY: Info & Close */}
+        {/* TOP OVERLAY */}
         <div className="absolute top-0 left-0 w-full p-4 z-50 flex justify-between items-start bg-gradient-to-b from-black/70 to-transparent">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full border-2 border-yellow-500 overflow-hidden bg-zinc-800">
-                <img src="/api/placeholder/40/40" alt="Astro" className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-black"></div>
+            <div className="w-10 h-10 rounded-full border-2 border-yellow-500 overflow-hidden bg-zinc-800">
+              <img src="/banners/astrouser.jpg" alt="Astro" className="w-full h-full object-cover" />
             </div>
             <div>
               <h3 className="text-white text-sm font-bold flex items-center gap-1">
@@ -99,19 +124,11 @@ const LiveCallPage = () => {
               </h3>
               <div className="flex items-center gap-2">
                 <span className="bg-red-600 text-[10px] px-2 py-0.5 rounded font-black text-white animate-pulse">LIVE</span>
-                <span className="text-zinc-300 text-[10px] flex items-center gap-1">
-                  <Users size={10} /> 1.2k
-                </span>
+                <span className="text-zinc-300 text-[10px] flex items-center gap-1"><Users size={10} /> {viewers}</span>
               </div>
             </div>
           </div>
-
-          <button 
-            onClick={handleExit}
-            className="bg-white/10 hover:bg-red-600/80 p-2 rounded-full text-white transition-colors"
-          >
-            <X size={20} />
-          </button>
+          <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full text-white"><X size={20} /></button>
         </div>
 
         {/* MAIN VIDEO */}
@@ -120,50 +137,64 @@ const LiveCallPage = () => {
             ref={remoteVideoRef} 
             autoPlay 
             playsInline 
-            muted={isMuted}
-            className="w-full h-full object-cover"
+            muted={isMuted} 
+            className="w-full h-full object-cover" 
+            onLoadedMetadata={(e) => e.currentTarget.play().catch(() => {})}
           />
           
-          {/* Unmute Big Button (Overlay) */}
+          {/* CHAT BOX WITH SCROLL - Fixed Pointer Events */}
+          <div 
+            ref={chatContainerRef}
+            className="absolute bottom-28 left-0 w-full px-4 max-h-40 overflow-y-auto z-40 flex flex-col gap-1 pointer-events-auto scrollbar-hide"
+            style={{ scrollBehavior: 'smooth' }}
+          >
+            {messages.map((m, i) => (
+              <div key={i} className="flex items-start">
+                 <div className="text-white text-xs bg-black/40 p-1.5 rounded-lg rounded-tl-none border border-white/10 backdrop-blur-sm shadow-lg">
+                    <span className="font-bold text-yellow-400">{m.user}: </span>{m.text}
+                 </div>
+              </div>
+            ))}
+          </div>
+
           {status === "Live" && isMuted && (
-            <button 
-              onClick={() => setIsMuted(false)}
-              className="absolute inset-0 m-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center border border-yellow-500/50 backdrop-blur-sm animate-pulse"
-            >
+            <button onClick={() => setIsMuted(false)} className="absolute inset-0 m-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-yellow-500/50 animate-pulse z-50">
               <VolumeX size={32} className="text-yellow-500" />
             </button>
           )}
         </div>
 
-        {/* BOTTOM CONTROLS */}
-        <div className="absolute bottom-0 left-0 w-full p-6 z-50 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-center">
-          <div className="flex-1 mr-4">
-             <div className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/10 flex items-center">
-                <input 
-                  type="text" 
-                  placeholder="Say Hi to Astro..." 
-                  className="bg-transparent border-none outline-none text-white text-sm w-full"
-                />
-             </div>
-          </div>
-          
-          <button 
-            onClick={() => setIsMuted(!isMuted)}
-            className={`p-3 rounded-full transition-all ${!isMuted ? 'bg-yellow-500 text-black' : 'bg-white/10 text-white border border-white/20'}`}
-          >
+        {/* BOTTOM UI */}
+        <div className="absolute bottom-0 left-0 w-full p-6 z-50 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-center gap-3">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (chatInput.trim()) {
+              const myMsg = { roomId: astroId, user: "User", text: chatInput, id: Date.now() };
+              // Optimistic update: khud ko dikhao, server par bhejo
+              setMessages(prev => [...prev, myMsg]);
+              messageIds.current.add(myMsg.id);
+              socket.emit("send-message", myMsg);
+              setChatInput("");
+            }
+          }} className="flex-1 flex gap-2">
+            <input 
+                type="text" 
+                value={chatInput} 
+                onChange={(e) => setChatInput(e.target.value)} 
+                placeholder="Chat with Astro..." 
+                className="flex-1 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 text-white text-sm outline-none border border-white/10" 
+            />
+            <button type="submit" className="bg-yellow-500 p-2 rounded-full text-black"><Send size={18}/></button>
+          </form>
+          <button onClick={() => setIsMuted(!isMuted)} className="p-3 rounded-full bg-white/10 text-white">
             {!isMuted ? <Volume2 size={24} /> : <VolumeX size={24} />}
           </button>
         </div>
 
-        {/* LOADING STATE */}
         {status === "Connecting..." && (
-          <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-zinc-950/90 text-white">
-            <div className="relative">
-               <div className="w-16 h-16 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin"></div>
-               <Star className="absolute inset-0 m-auto text-yellow-500 animate-pulse" size={20} />
-            </div>
-            <p className="mt-4 font-bold text-yellow-500">Connecting to Astro...</p>
-            <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest">Seeking Divine Guidance</p>
+          <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-zinc-950/90 text-white text-center px-10">
+            <div className="w-16 h-16 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin mb-4"></div>
+            <p className="font-bold text-yellow-500 tracking-widest">CONNECTING...</p>
           </div>
         )}
       </div>

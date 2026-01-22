@@ -103,23 +103,20 @@ const LiveCallPage = () => {
   }, [astroId, navigate]);
 
   const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
+  e.preventDefault();
+  if (!chatInput.trim()) return;
 
-    const myMsg = { 
-    // Backend expects 'live_room_' prefix or it adds it. 
-    // Best practice: Be explicit.
-    roomId: `live_room_${astroId}`, 
+  const myMsg = { 
+    roomId: `live_room_${astroId}`, // Prefix confirm karein
     user: "User", 
     text: chatInput, 
     id: `${socket.id}-${Date.now()}` 
   };
 
-    // Note: Humein khud ke UI par message add karne ki zaroorat nahi hai 
-    // kyunki backend 'receive-message' sabko bhejega, including us.
-    socket.emit("send-message", myMsg);
-    setChatInput("");
-  };
+  console.log("Sending Message Data:", myMsg); // Browser console mein check karein
+  socket.emit("send-message", myMsg);
+  setChatInput("");
+};
 
   return (
     <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans">
@@ -194,4 +191,5 @@ const LiveCallPage = () => {
 };
 
 export default LiveCallPage;
+
 

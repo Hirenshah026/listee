@@ -13,9 +13,9 @@ const AstroLiveHost = () => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const ASTRO_ID = "6958bde63adbac9b1c1da23e";
 
-  // Messages ko track karne ke liye ek Set (Duplicate check ke liye)
   const messageIds = useRef(new Set());
 
+  // Auto-scroll chat
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -34,7 +34,7 @@ const AstroLiveHost = () => {
     setIsLive(false);
     setViewers(0);
     setMessages([]);
-    messageIds.current.clear(); // Reset messages tracking
+    messageIds.current.clear();
   };
 
   const startLive = async () => {
@@ -43,32 +43,30 @@ const AstroLiveHost = () => {
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setIsLive(true);
+      
       socket.emit("join", ASTRO_ID);
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) { alert("Camera access denied!"); }
+    } catch (err) { 
+      alert("Camera access denied! Please check HTTPS or Permissions."); 
+    }
   };
 
   useEffect(() => {
-    // 1. CLEANUP PREVIOUS LISTENERS
-    const cleanupListeners = () => {
-      socket.off("new-viewer");
-      socket.off("update-viewers");
-      socket.off("receive-message");
-      socket.off("answer-from-viewer");
-      socket.off("ice-candidate");
-    };
-
-    cleanupListeners();
-
-    // 2. NEW LISTENERS
+    // 1. New Viewer joins -> Start WebRTC Offer
     socket.on("new-viewer", async ({ viewerId }) => {
       if (pcs.current[viewerId]) return;
-      const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+      
+      const pc = new RTCPeerConnection({ 
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }] 
+      });
       pcs.current[viewerId] = pc;
+
       streamRef.current?.getTracks().forEach(track => pc.addTrack(track, streamRef.current!));
+
       pc.onicecandidate = (e) => {
         if (e.candidate) socket.emit("ice-candidate", { to: viewerId, candidate: e.candidate });
       };
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit("send-offer-to-viewer", { to: viewerId, offer });
@@ -76,17 +74,16 @@ const AstroLiveHost = () => {
 
     socket.on("update-viewers", (count) => setViewers(count));
 
-    // --- MESSAGE DUPLICATION FIX ---
+    // 2. Chat Message Receiver
     socket.on("receive-message", (msg) => {
-      // Message ki unique ID check karo (msg.id ya timestamp use karein)
-      const msgUniqueId = msg.id || `${msg.user}-${msg.text}-${new Date().getTime()}`;
-      
+      const msgUniqueId = msg.id || `${msg.user}-${msg.text}-${Date.now()}`;
       if (!messageIds.current.has(msgUniqueId)) {
         messageIds.current.add(msgUniqueId);
         setMessages((prev) => [...prev, msg]);
       }
     });
 
+    // 3. WebRTC Signaling Listeners
     socket.on("answer-from-viewer", async ({ from, answer }) => {
       const pc = pcs.current[from];
       if (pc && pc.signalingState !== "stable") {
@@ -96,12 +93,15 @@ const AstroLiveHost = () => {
 
     socket.on("ice-candidate", async ({ from, candidate }) => {
       const pc = pcs.current[from];
-      if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
+      if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
     });
 
     return () => {
-      cleanupListeners();
-      // Yahan stopLive() mat dalo agar navigation par stream on rakhni hai
+      socket.off("new-viewer");
+      socket.off("update-viewers");
+      socket.off("receive-message");
+      socket.off("answer-from-viewer");
+      socket.off("ice-candidate");
     };
   }, []);
 
@@ -120,14 +120,14 @@ const AstroLiveHost = () => {
 
           <div 
             ref={chatContainerRef}
-            className="absolute bottom-32 left-0 w-full px-4 max-h-[180px] overflow-y-auto z-20 flex flex-col gap-2 pointer-events-auto"
+            className="absolute bottom-32 left-0 w-full px-4 max-h-[180px] overflow-y-auto z-20 flex flex-col gap-2 pointer-events-auto scrollbar-hide"
           >
             {messages.map((m, i) => (
               <div key={i} className="flex items-start">
                 <div className="bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-2xl rounded-tl-none max-w-[85%]">
-                  <p className="text-[13px] leading-tight">
+                  <p className="text-[13px] leading-tight text-white">
                     <span className="font-bold text-yellow-500 mr-1">{m.user}:</span>
-                    <span className="text-white font-medium">{m.text}</span>
+                    {m.text}
                   </p>
                 </div>
               </div>

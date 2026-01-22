@@ -18,8 +18,7 @@ const LiveCallPage = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
 
-  // Room Name Constant
-  const ROOM_NAME = `live_room_${astroId}`;
+  const ROOM_ID = `live_room_${astroId}`;
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -41,13 +40,12 @@ const LiveCallPage = () => {
       }
     };
 
-    const joinRoom = () => {
-      console.log("Joining Room:", ROOM_NAME);
+    const joinStream = () => {
       socket.emit("join-live-room", { astroId, role: "viewer" });
     };
 
-    if (socket.connected) joinRoom();
-    socket.on("connect", joinRoom);
+    if (socket.connected) joinStream();
+    socket.on("connect", joinStream);
 
     socket.on("offer-from-astro", async ({ offer, from }) => {
       hostSocketId.current = from;
@@ -70,89 +68,91 @@ const LiveCallPage = () => {
     socket.on("stream-ended", () => navigate(-1));
 
     return () => {
-      socket.off("connect", joinRoom);
+      socket.off("connect", joinStream);
       socket.off("offer-from-astro");
       socket.off("update-viewers");
       socket.off("receive-message");
+      socket.off("stream-ended");
       if (pc.current) pc.current.close();
     };
   }, [astroId]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim() || !astroId) return;
+    if (!chatInput.trim()) return;
 
-    const msgId = `msg-${Date.now()}`;
-    const myMsg = { roomId: ROOM_NAME, user: "User", text: chatInput, id: msgId };
+    const msgData = {
+      roomId: ROOM_ID,
+      user: "User",
+      text: chatInput,
+      id: `msg-${socket.id}-${Date.now()}`
+    };
 
-    setMessages((prev) => [...prev, myMsg]);
-    messageIds.current.add(msgId);
-    socket.emit("send-message", myMsg);
+    // Turant screen par dikhao
+    setMessages((prev) => [...prev, msgData]);
+    messageIds.current.add(msgData.id);
+    
+    // Server ko bhejo
+    socket.emit("send-message", msgData);
     setChatInput("");
   };
 
   return (
-    <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans">
-      <div className="w-full max-w-[450px] relative bg-black shadow-2xl overflow-hidden flex flex-col h-full">
+    <div className="flex justify-center bg-black h-[100dvh] w-full fixed inset-0 overflow-hidden font-sans">
+      <div className="w-full max-w-[450px] relative bg-zinc-900 flex flex-col h-full shadow-2xl">
         
         {/* Header Overlay */}
-        <div className="absolute top-0 left-0 w-full p-4 z-50 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">
+        <div className="absolute top-0 left-0 w-full p-4 z-50 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent font-sans">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-yellow-500 overflow-hidden bg-zinc-800">
-              <img src="/banners/astrouser.jpg" alt="Astro" className="w-full h-full object-cover" />
-            </div>
+            <div className="w-10 h-10 rounded-full border border-yellow-500 overflow-hidden"><img src="/banners/astrouser.jpg" className="w-full h-full object-cover" alt="Astro" /></div>
             <div>
-              <h3 className="text-white text-sm font-bold">Astro Live</h3>
+              <h3 className="text-white text-xs font-bold">Astro Live</h3>
               <div className="flex items-center gap-2">
-                <span className="bg-red-600 text-[10px] px-2 py-0.5 rounded font-black text-white animate-pulse">LIVE</span>
-                <span className="text-zinc-300 text-[10px] flex items-center gap-1"><Users size={10} /> {viewers}</span>
+                <span className="bg-red-600 text-[9px] px-1.5 py-0.5 rounded font-black text-white">LIVE</span>
+                <span className="text-white text-[10px] flex items-center gap-1 font-bold"><Users size={10} /> {viewers}</span>
               </div>
             </div>
           </div>
-          <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full text-white"><X size={20} /></button>
+          <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full text-white"><X size={18} /></button>
         </div>
 
         {/* Video Screen */}
-        <div className="flex-1 relative bg-zinc-900 flex items-center justify-center">
+        <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
           <video ref={remoteVideoRef} autoPlay playsInline muted={isMuted} className="w-full h-full object-cover" />
           
-          {/* Chat Messages (Wahi Purana Look) */}
-          <div ref={chatContainerRef} className="absolute bottom-28 left-0 w-full px-4 max-h-40 overflow-y-auto z-40 flex flex-col gap-1 scrollbar-hide">
+          {/* Chat Messages */}
+          <div ref={chatContainerRef} className="absolute bottom-24 left-0 w-full px-4 max-h-[160px] overflow-y-auto z-40 flex flex-col gap-1.5 scrollbar-hide">
             {messages.map((m, i) => (
-              <div key={i} className="flex items-start">
-                <div className="text-white text-xs bg-black/40 p-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
-                  <span className="font-bold text-yellow-400">{m.user}: </span>{m.text}
+              <div key={m.id || i} className="flex flex-col items-start">
+                <div className="bg-black/40 backdrop-blur-sm border border-white/5 px-3 py-1.5 rounded-xl text-white text-xs max-w-[85%]">
+                  <span className="font-bold text-yellow-400 mr-1">{m.user}:</span>{m.text}
                 </div>
               </div>
             ))}
           </div>
 
           {status === "Live" && isMuted && (
-            <button onClick={() => setIsMuted(false)} className="absolute inset-0 m-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center z-50">
-              <VolumeX size={32} className="text-yellow-500" />
-            </button>
+            <button onClick={() => setIsMuted(false)} className="absolute inset-0 m-auto w-14 h-14 bg-yellow-500/20 rounded-full flex items-center justify-center z-50"><VolumeX size={28} className="text-yellow-500" /></button>
           )}
         </div>
 
-        {/* Input Area (Wahi Purana Look) */}
-        <div className="absolute bottom-0 left-0 w-full p-6 z-50 bg-gradient-to-t from-black/80 to-transparent flex gap-3 items-center">
+        {/* Input Bar */}
+        <div className="p-4 bg-gradient-to-t from-black to-transparent flex gap-2 items-center z-50">
           <form onSubmit={handleSendMessage} className="flex-1 flex gap-2">
-            <input 
-              type="text" 
-              value={chatInput} 
-              onChange={(e) => setChatInput(e.target.value)} 
-              placeholder="Chat with Astro..." 
-              className="flex-1 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 text-white text-sm outline-none border border-white/10" 
-            />
-            <button type="submit" className="bg-yellow-500 p-2 rounded-full text-black"><Send size={18}/></button>
+            <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Say hi..." className="flex-1 bg-white/10 rounded-full px-4 py-2.5 text-white text-xs border border-white/10 outline-none" />
+            <button type="submit" className="bg-yellow-500 p-2.5 rounded-full text-black"><Send size={16}/></button>
           </form>
-          <button onClick={() => setIsMuted(!isMuted)} className="p-3 rounded-full bg-white/10 text-white">
-            {!isMuted ? <Volume2 size={24} /> : <VolumeX size={24} />}
-          </button>
+          <button onClick={() => setIsMuted(!isMuted)} className="p-2.5 rounded-full bg-white/10 text-white">{!isMuted ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>
         </div>
+
+        {status === "Connecting..." && (
+          <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black">
+            <div className="w-10 h-10 border-2 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin mb-3"></div>
+            <p className="text-yellow-500 font-bold text-[10px] tracking-widest uppercase">Joining Stream...</p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
 export default LiveCallPage;

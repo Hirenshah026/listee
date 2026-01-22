@@ -64,7 +64,6 @@ const AstroLiveHost = () => {
       setIsLive(true);
       setMessages([]);
       setViewers(0);
-      
       socket.emit("join", ASTRO_ID); 
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
     } catch (err) {
@@ -87,7 +86,7 @@ const AstroLiveHost = () => {
     <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans overflow-hidden">
       <div className="w-full max-w-[450px] relative bg-black shadow-2xl flex flex-col border-x border-white/5">
         
-        {/* Updated Header with END LIVE Button */}
+        {/* Header Section */}
         <div className="absolute top-0 left-0 w-full z-50 p-4 pt-6 bg-gradient-to-b from-black/90 to-transparent">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -107,48 +106,45 @@ const AstroLiveHost = () => {
               </div>
             </div>
             
-            {/* Professional End Live Button */}
             {isLive && (
-              <button 
-                onClick={stopLive} 
-                className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-black px-4 py-2 rounded-lg transition-all active:scale-90 shadow-lg border border-red-500/50"
-              >
+              <button onClick={stopLive} className="bg-red-600 text-white text-[10px] font-black px-4 py-2 rounded-lg active:scale-90 shadow-lg border border-red-500/50">
                 END LIVE
               </button>
             )}
           </div>
         </div>
 
-        {/* Video Display */}
+        {/* Video Section */}
         <div className="flex-1 bg-zinc-900 relative">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           
-          {/* Main Action Area when Not Live */}
           {!isLive && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 z-[60] p-8 text-center">
               <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6 border border-yellow-500/30">
                 <Power size={40} className="text-yellow-500" />
               </div>
-              <h2 className="text-white font-bold text-2xl mb-2 tracking-tight">Broadcast Center</h2>
-              <p className="text-zinc-500 text-sm mb-10 leading-relaxed px-4">Ready to start your session? Click below to begin streaming to your audience.</p>
-              <button 
-                onClick={startLive} 
-                className="bg-yellow-500 text-black font-black px-10 py-4 rounded-2xl shadow-[0_10px_30px_rgba(234,179,8,0.4)] active:scale-95 transition-all w-full tracking-wider uppercase"
-              >
+              <h2 className="text-white font-bold text-2xl mb-2 tracking-tight italic">ASTRO CENTER</h2>
+              <button onClick={startLive} className="bg-yellow-500 text-black font-black px-10 py-4 rounded-2xl shadow-xl active:scale-95 transition-all w-full tracking-wider uppercase">
                 Start Live Now
               </button>
             </div>
           )}
 
-          {/* Chat Messages */}
+          {/* Chat Section Fixed */}
           {isLive && (
-            <div className="absolute bottom-24 left-0 w-full px-4 flex flex-col gap-2 max-h-[40%] overflow-y-auto scrollbar-hide z-40">
+            <div className="absolute bottom-24 left-0 w-full px-4 flex flex-col items-start gap-2 max-h-[40%] overflow-y-auto scrollbar-hide z-40">
               {messages.map((m, i) => (
-                <div key={i} className="animate-in slide-in-from-left-2 duration-200">
-                  <div className="bg-black/30 backdrop-blur-md border border-white/5 px-3 py-1.5 rounded-xl self-start max-w-[85%]">
-                    <p className="text-[13px] leading-tight">
-                      <span className="text-yellow-400 font-bold mr-2">{m.user}:</span>
-                      <span className="text-white/90">{m.text}</span>
+                <div key={i} className="flex flex-col items-start max-w-[85%]">
+                  <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/10 inline-block shadow-lg">
+                    <p className="text-[13px] leading-snug">
+                      {/* Name - Stronger Yellow with brightness */}
+                      <span className="text-yellow-300 font-extrabold mr-1.5 brightness-125 drop-shadow-sm">
+                        {m.user}:
+                      </span>
+                      {/* Message Text */}
+                      <span className="text-white font-medium">
+                        {m.text}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -158,7 +154,6 @@ const AstroLiveHost = () => {
           )}
         </div>
 
-        {/* Bottom Navigation */}
         <div className="bg-black border-t border-white/5">
           <BottomNav />
         </div>

@@ -26,6 +26,7 @@ const LiveCallPage = () => {
   }, [messages]);
 
   useEffect(() => {
+    // 1. WebRTC Setup
     pc.current = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
     });
@@ -37,6 +38,7 @@ const LiveCallPage = () => {
       }
     };
 
+    // 2. Socket Listeners
     socket.on("offer-from-astro", async ({ offer, from }) => {
       hostSocketId.current = from;
       await pc.current?.setRemoteDescription(new RTCSessionDescription(offer));
@@ -54,16 +56,29 @@ const LiveCallPage = () => {
       }
     });
 
+    // --- NAYA LOGIC: Jab astro live end karega ---
+    socket.on("stream-ended", () => {
+      console.log("Stream has been ended by Astro");
+      // Aap chaho to alert dikha sakte ho
+      navigate(-1); // Automatically wapas bhej dega
+    });
+
+    // 3. Join Room
     socket.emit("join-live-room", { astroId, role: "viewer" });
 
+    // 4. Cleanup
     return () => {
       socket.off("offer-from-astro");
       socket.off("update-viewers");
       socket.off("receive-message");
       socket.off("ice-candidate");
-      if (pc.current) pc.current.close();
+      socket.off("stream-ended"); // Cleanup zaroori hai
+      if (pc.current) {
+        pc.current.close();
+        pc.current = null;
+      }
     };
-  }, [astroId]);
+  }, [astroId, navigate]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

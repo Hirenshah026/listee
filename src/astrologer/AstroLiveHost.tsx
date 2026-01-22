@@ -29,31 +29,43 @@ const AstroLiveHost = () => {
       if (videoRef.current) videoRef.current.srcObject = stream;
       setIsLive(true);
       
+      // Step 1: Register Astro ID
       socket.emit("join", ASTRO_ID);
+      // Step 2: Join Live Room (For Chat and Count)
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) { alert("Mic/Camera access denied!"); }
+    } catch (err) { alert("Camera Permission Error"); }
   };
 
   const stopLive = () => {
     socket.emit("end-stream", { astroId: ASTRO_ID });
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     Object.values(pcs.current).forEach(pc => pc.close());
     pcs.current = {};
     setIsLive(false);
     setViewers(0);
     setMessages([]);
-    messageIds.current.clear();
   };
 
   useEffect(() => {
+    // Viewer count update logic
+    socket.on("update-viewers", (count) => {
+      console.log("Count received on Host:", count);
+      setViewers(count);
+    });
+
+    // Message receive logic
+    socket.on("receive-message", (data) => {
+      console.log("Message received on Host:", data);
+      if (!messageIds.current.has(data.id)) {
+        messageIds.current.add(data.id);
+        setMessages((prev) => [...prev, data]);
+      }
+    });
+
     socket.on("new-viewer", async ({ viewerId }) => {
-      if (pcs.current[viewerId]) return;
       const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
       pcs.current[viewerId] = pc;
-      streamRef.current?.getTracks().forEach(track => pc.addTrack(track, streamRef.current!));
+      streamRef.current?.getTracks().forEach(t => pc.addTrack(t, streamRef.current!));
       pc.onicecandidate = (e) => {
         if (e.candidate) socket.emit("ice-candidate", { to: viewerId, candidate: e.candidate });
       };
@@ -62,30 +74,21 @@ const AstroLiveHost = () => {
       socket.emit("send-offer-to-viewer", { to: viewerId, offer });
     });
 
-    socket.on("update-viewers", (count) => setViewers(count));
-
-    socket.on("receive-message", (msg) => {
-      if (!messageIds.current.has(msg.id)) {
-        messageIds.current.add(msg.id);
-        setMessages((prev) => [...prev, msg]);
-      }
-    });
-
     socket.on("answer-from-viewer", async ({ from, answer }) => {
       const pc = pcs.current[from];
       if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
     });
 
     return () => {
-      socket.off("new-viewer");
       socket.off("update-viewers");
       socket.off("receive-message");
+      socket.off("new-viewer");
       socket.off("answer-from-viewer");
     };
   }, []);
 
   return (
-    <div className="flex justify-center bg-zinc-950 h-[100dvh] overflow-hidden font-sans">
+    <div className="flex justify-center bg-zinc-950 h-screen overflow-hidden font-sans">
       <div className="w-full max-w-[450px] flex flex-col bg-black relative border-x border-zinc-800 shadow-2xl h-full">
         <Header />
         <main className="flex-1 relative bg-zinc-900 overflow-hidden">
@@ -97,25 +100,18 @@ const AstroLiveHost = () => {
             </div>
           )}
 
-          {/* Chat Messages Overlay */}
           <div ref={chatContainerRef} className="absolute bottom-32 left-0 w-full px-4 max-h-[180px] overflow-y-auto z-30 flex flex-col gap-2 scrollbar-hide">
             {messages.map((m, i) => (
               <div key={m.id || i} className="flex items-start">
-                <div className="bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl rounded-tl-none">
-                  <p className="text-[13px] text-white">
-                    <span className="font-bold text-yellow-500 mr-1">{m.user}:</span>{m.text}
-                  </p>
+                <div className="bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-white text-[13px]">
+                  <span className="font-bold text-yellow-500 mr-1">{m.user}:</span>{m.text}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Button Area */}
           <div className="absolute bottom-10 w-full px-10 z-40">
-            <button 
-              onClick={isLive ? stopLive : startLive} 
-              className={`w-full py-4 rounded-full font-bold shadow-lg ${isLive ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}
-            >
+            <button onClick={isLive ? stopLive : startLive} className={`w-full py-4 rounded-full font-bold shadow-lg ${isLive ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}>
               {isLive ? "STOP LIVE" : "START LIVE"}
             </button>
           </div>

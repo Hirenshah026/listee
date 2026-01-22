@@ -11,51 +11,26 @@ const AstroLiveHost = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const pcs = useRef<{ [key: string]: RTCPeerConnection }>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const messageIds = useRef(new Set());
-  
-  // Is ID ko apni database wali Astro ID se match karein
   const ASTRO_ID = "6958bde63adbac9b1c1da23e"; 
 
+  // Host Message Receiver - IMPORTANT
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
+    socket.on("receive-message", (msg) => {
+      console.log("LOG: Host Received Message ->", msg); // Check console
+      setMessages((prev) => [...prev, msg]);
+    });
 
-  // Start Stream Logic
-  const startLive = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      setIsLive(true);
-      
-      // Sabse Pehle Register then Join Room
-      socket.emit("join", ASTRO_ID);
-      socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-      console.log("Host Joined Room:", ASTRO_ID);
-    } catch (err) { 
-      alert("Camera access denied!"); 
-    }
-  };
+    socket.on("update-viewers", (count) => {
+      console.log("LOG: Viewers Count Updated ->", count);
+      setViewers(count);
+    });
 
-  const stopLive = () => {
-    socket.emit("end-stream", { astroId: ASTRO_ID });
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-    Object.values(pcs.current).forEach(p => p.close());
-    pcs.current = {};
-    setIsLive(false);
-    setViewers(0);
-    setMessages([]);
-  };
-
-  useEffect(() => {
-    // WebRTC Signaling
     socket.on("new-viewer", async ({ viewerId }) => {
-      console.log("New Viewer connected:", viewerId);
+      console.log("LOG: New Viewer Found ->", viewerId);
+      if (pcs.current[viewerId]) return;
+      
       const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
       pcs.current[viewerId] = pc;
-
       streamRef.current?.getTracks().forEach(track => pc.addTrack(track, streamRef.current!));
 
       pc.onicecandidate = (e) => {
@@ -68,67 +43,54 @@ const AstroLiveHost = () => {
     });
 
     socket.on("answer-from-viewer", async ({ from, answer }) => {
+      console.log("LOG: Answer Received from ->", from);
       const pc = pcs.current[from];
       if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
     });
 
-    socket.on("ice-candidate", async ({ from, candidate }) => {
-      const pc = pcs.current[from];
-      if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    });
-
-    // Chat and Viewer Count
-    socket.on("update-viewers", (count) => {
-      console.log("Host Viewers Count:", count);
-      setViewers(count);
-    });
-
-    socket.on("receive-message", (msg) => {
-      if (!messageIds.current.has(msg.id)) {
-        messageIds.current.add(msg.id);
-        setMessages((prev) => [...prev, msg]);
-      }
-    });
-
     return () => {
-      socket.off("new-viewer");
-      socket.off("update-viewers");
       socket.off("receive-message");
+      socket.off("update-viewers");
+      socket.off("new-viewer");
       socket.off("answer-from-viewer");
-      socket.off("ice-candidate");
     };
   }, []);
 
+  const startLive = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setIsLive(true);
+      
+      // Emit Join Events
+      socket.emit("join", ASTRO_ID);
+      socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
+      console.log("LOG: Host Started Live and Joined Room");
+    } catch (err) { alert("Camera Permission Required"); }
+  };
+
   return (
-    <div className="flex justify-center bg-zinc-950 h-screen overflow-hidden">
-      <div className="w-full max-w-[450px] flex flex-col bg-black relative border-x border-zinc-800 shadow-2xl h-full font-sans">
+    <div className="flex justify-center bg-black h-screen overflow-hidden">
+      <div className="w-full max-w-[450px] flex flex-col relative border-x border-zinc-800">
         <Header />
-        <main className="flex-1 relative bg-zinc-900 overflow-hidden">
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-          
-          {isLive && (
-            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-[10px] font-black z-20 animate-pulse">
-              LIVE • {viewers}
+        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover bg-zinc-900" />
+        {isLive && <div className="absolute top-20 left-4 bg-red-600 px-2 py-1 text-white text-[10px] font-bold rounded animate-pulse">LIVE: {viewers}</div>}
+        
+        {/* Chat Area */}
+        <div ref={chatContainerRef} className="absolute bottom-40 left-0 w-full px-4 max-h-[150px] overflow-y-auto z-50 flex flex-col gap-1">
+          {messages.map((m, i) => (
+            <div key={i} className="bg-black/40 text-white text-xs p-2 rounded-lg border border-white/10 backdrop-blur-sm">
+              <span className="text-yellow-400 font-bold">{m.user}:</span> {m.text}
             </div>
-          )}
+          ))}
+        </div>
 
-          {/* Messages Overlay */}
-          <div ref={chatContainerRef} className="absolute bottom-32 left-0 w-full px-4 max-h-[180px] overflow-y-auto z-30 flex flex-col gap-2 scrollbar-hide">
-            {messages.map((m, i) => (
-              <div key={m.id || i} className="flex items-start">
-                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-white text-[13px]">
-                  <span className="font-bold text-yellow-500 mr-1">{m.user}:</span>{m.text}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="absolute bottom-10 w-full px-10 z-40">
-            <button onClick={isLive ? stopLive : startLive} className={`w-full py-4 rounded-full font-bold transition-all ${isLive ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}>
-              {isLive ? "END LIVE" : "GO LIVE"}
-            </button>
-          </div>
-        </main>
+        <div className="absolute bottom-20 w-full px-8">
+          <button onClick={startLive} className={`w-full py-4 rounded-full font-bold ${isLive ? 'bg-red-600' : 'bg-yellow-500'}`}>
+            {isLive ? "LIVE ACTIVE" : "GO LIVE"}
+          </button>
+        </div>
         <BottomNav />
       </div>
     </div>

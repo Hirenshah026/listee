@@ -107,11 +107,13 @@ const LiveCallPage = () => {
     if (!chatInput.trim()) return;
 
     const myMsg = { 
-      roomId: astroId, 
-      user: "User", // Yahan aap logged-in user name bhi daal sakte hain
-      text: chatInput, 
-      id: `${socket.id}-${Date.now()}` 
-    };
+    // Backend expects 'live_room_' prefix or it adds it. 
+    // Best practice: Be explicit.
+    roomId: `live_room_${astroId}`, 
+    user: "User", 
+    text: chatInput, 
+    id: `${socket.id}-${Date.now()}` 
+  };
 
     // Note: Humein khud ke UI par message add karne ki zaroorat nahi hai 
     // kyunki backend 'receive-message' sabko bhejega, including us.
@@ -192,3 +194,4 @@ const LiveCallPage = () => {
 };
 
 export default LiveCallPage;
+

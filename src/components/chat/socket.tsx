@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 const API_URL = "https://listee-backend.onrender.com";
 const socket = io(API_URL, {
   transports: ["polling","websocket"],
-  withCrendentials:true,
+  withCredentials:true,
   autoConnect: true,
   reconnection: true,
   reconnectionAttempts: 10,
@@ -12,5 +12,6 @@ const socket = io(API_URL, {
 });
 
 export default socket;
+
 
 

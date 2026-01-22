@@ -17,13 +17,11 @@ const LiveCallPage = () => {
     if (!astroId) return;
 
     pc.current = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-
     pc.current.ontrack = (e) => {
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
     };
 
     pc.current.onicecandidate = (e) => {
-      // YAHAN FIX HAI: Database ID ki jagah hostSocketId bhejni hai
       if (e.candidate && hostSocketId) {
         socket.emit("ice-candidate", { to: hostSocketId, candidate: e.candidate });
       }
@@ -32,7 +30,7 @@ const LiveCallPage = () => {
     socket.emit("join-live-room", { astroId, role: "viewer" });
 
     socket.on("offer-from-astro", async ({ offer, from }) => {
-      setHostSocketId(from); // Host ki socket ID save karo signaling ke liye
+      setHostSocketId(from); 
       await pc.current?.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.current?.createAnswer();
       await pc.current?.setLocalDescription(answer);
@@ -59,7 +57,6 @@ const LiveCallPage = () => {
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    // Backend logic: roomId check karta hai broadcast ke liye
     socket.emit("send-message", { 
       roomId: `live_room_${astroId}`, 
       user: "User", 
@@ -72,23 +69,30 @@ const LiveCallPage = () => {
   return (
     <div className="fixed inset-0 bg-black flex flex-col">
       <div className="absolute top-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
-        <div className="text-white text-xs font-bold flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full">
-          <Users size={14}/> {viewers}
+        <div className="text-white text-xs font-bold flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-white/10">
+          <Users size={12}/> {viewers}
         </div>
-        <button onClick={() => navigate(-1)} className="text-white bg-white/20 p-2 rounded-full"><X/></button>
+        <button onClick={() => navigate(-1)} className="text-white bg-white/20 p-2 rounded-full backdrop-blur-md"><X size={20}/></button>
       </div>
-      <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-zinc-900" />
+
+      <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-zinc-950" />
+
       <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black flex flex-col gap-3">
         <div className="max-h-[140px] overflow-y-auto flex flex-col gap-2 scrollbar-hide">
           {messages.map((m, i) => (
-            <div key={i} className="bg-black/50 p-2 rounded-lg text-white text-[11px] self-start">
+            <div key={i} className="bg-black/50 p-2 rounded-lg text-white text-[11px] self-start border border-white/5">
               <span className="text-yellow-400 font-bold">{m.user}: </span>{m.text}
             </div>
           ))}
         </div>
-        <form onSubmit={sendMessage} className="flex gap-2 mb-2">
-          <input value={chatInput} onChange={e => setChatInput(e.target.value)} className="flex-1 bg-white/10 rounded-full px-4 py-2 text-white text-xs outline-none" placeholder="Message..." />
-          <button className="bg-yellow-500 p-2 rounded-full"><Send size={18}/></button>
+        <form onSubmit={sendMessage} className="flex gap-2 mb-2 items-center">
+          <input 
+            value={chatInput} 
+            onChange={e => setChatInput(e.target.value)} 
+            className="flex-1 bg-white/10 backdrop-blur-md rounded-full px-5 py-3 text-white text-xs outline-none border border-white/10" 
+            placeholder="Chat with astro..." 
+          />
+          <button className="bg-yellow-500 p-3 rounded-full text-black shadow-lg"><Send size={18}/></button>
         </form>
       </div>
     </div>

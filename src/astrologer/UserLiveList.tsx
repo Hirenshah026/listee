@@ -7,8 +7,7 @@ import { Astrologer } from "./types/astrologer";
 const UserLiveList: React.FC = () => {
   const [liveAstros, setLiveAstros] = useState<Astrologer[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // API URL
+
   const API_URL = "https://listee-backend.onrender.com";
 
   useEffect(() => {
@@ -16,14 +15,8 @@ const UserLiveList: React.FC = () => {
       try {
         setLoading(true);
         const res = await axios.get(`${API_URL}/api/auth/astro/list`);
-        
-        console.log("Full API Response:", res.data);
-
-        // Aapka data "astro" key ke andar hai
         if (res.data.success && Array.isArray(res.data.astro)) {
           setLiveAstros(res.data.astro);
-        } else {
-          console.error("Data structure mismatch or success is false");
         }
       } catch (err) {
         console.error("Error fetching astros:", err);
@@ -31,38 +24,39 @@ const UserLiveList: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchAstros();
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-200 flex justify-center font-sans">
-      {/* Laptop Centered Frame */}
-      <div className="w-full max-w-[450px] bg-white shadow-2xl flex flex-col h-screen overflow-hidden relative border-x border-gray-300">
-        <Header />
+    // 1. HomePage ki tarah h-[100dvh] use kiya hai
+    <div className="flex justify-center bg-zinc-200 h-[100dvh] w-full overflow-hidden font-sans">
+      <div className="w-full max-w-[450px] bg-white flex flex-col h-full relative shadow-2xl border-x border-gray-300">
         
-        <div className="bg-yellow-50 px-4 py-2 border-b flex justify-between items-center">
-          <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest">
-             ✨ Live Astrologers
-          </p>
-          <span className="bg-red-100 text-red-600 text-[9px] px-2 py-0.5 rounded-full font-bold">
-            {liveAstros.length} Online
-          </span>
+        {/* Header (Fix) */}
+        <div className="flex-none z-50">
+          <Header />
+          <div className="bg-yellow-50 px-4 py-2 border-b flex justify-between items-center">
+            <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest">
+              ✨ Live Astrologers
+            </p>
+            <span className="bg-red-100 text-red-600 text-[9px] px-2 py-0.5 rounded-full font-bold">
+              {liveAstros.length} Online
+            </span>
+          </div>
         </div>
 
-        <main className="flex-1 overflow-y-auto p-3 pb-24 bg-gray-50">
+        {/* Content (Scrollable) */}
+        <main className="flex-1 overflow-y-auto scrollbar-hide bg-gray-50 p-3">
           {loading ? (
             <div className="flex flex-col justify-center items-center h-full gap-2">
               <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
               <p className="text-[10px] text-gray-400 font-bold uppercase">Connecting...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 pb-6"> 
               {liveAstros.length > 0 ? (
                 liveAstros.map((astro) => (
                   <div key={astro._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col transition-all active:scale-95">
-                    
-                    {/* Image Area */}
                     <div className="relative h-36 bg-zinc-100">
                       <img 
                         src={astro.image || "/banners/astrouser.jpg"} 
@@ -75,7 +69,6 @@ const UserLiveList: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Content Area */}
                     <div className="p-3 text-center flex-1 flex flex-col">
                       <h4 className="font-bold text-sm text-gray-800 capitalize truncate">
                         {astro.name}
@@ -105,10 +98,11 @@ const UserLiveList: React.FC = () => {
           )}
         </main>
 
-        {/* Footer Area */}
-        <div className="absolute bottom-0 w-full bg-white border-t">
+        {/* Bottom Nav (Fix) - shrinks to its own height */}
+        <div className="flex-none">
           <BottomNav />
         </div>
+
       </div>
     </div>
   );

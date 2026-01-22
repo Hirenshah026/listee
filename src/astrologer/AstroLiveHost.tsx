@@ -84,7 +84,7 @@ const AstroLiveHost = () => {
     setIsLive(false);
     
     // Redirect direct smoothly
-    navigate("/"); 
+    navigate("/astro/live"); 
   };
 
   return (
@@ -163,3 +163,4 @@ const AstroLiveHost = () => {
 };
 
 export default AstroLiveHost;
+

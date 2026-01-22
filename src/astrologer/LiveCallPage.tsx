@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import socket from "../components/chat/socket";
-import { X, Volume2, VolumeX, Users, Star, Send } from "lucide-react";
+import socket from "../components/chat/socket"; // Ensure transport: ['websocket'] is there
+import { X, Volume2, VolumeX, Users, Send } from "lucide-react";
 
 const LiveCallPage = () => {
   const { astroId } = useParams();
@@ -21,6 +21,7 @@ const LiveCallPage = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
 
+  // Scroll to bottom whenever messages update
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -28,6 +29,7 @@ const LiveCallPage = () => {
   }, [messages]);
 
   useEffect(() => {
+    // 1. Initialize PeerConnection
     pc.current = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
     });
@@ -45,6 +47,16 @@ const LiveCallPage = () => {
       }
     };
 
+    // 2. Room Join Logic (Render Friendly)
+    const joinRoom = () => {
+      console.log("Attempting to join live room:", astroId);
+      socket.emit("join-live-room", { astroId, role: "viewer" });
+    };
+
+    if (socket.connected) joinRoom();
+    socket.on("connect", joinRoom);
+
+    // 3. Socket Listeners
     const handleOffer = async ({ offer, from }: { offer: any, from: string }) => {
       if (!pc.current) return;
       try {
@@ -71,9 +83,8 @@ const LiveCallPage = () => {
     socket.on("update-viewers", (count) => setViewers(count));
     
     socket.on("receive-message", (msg) => {
-      const msgUniqueId = msg.id || `${msg.user}-${msg.text}-${Date.now()}`;
-      if (!messageIds.current.has(msgUniqueId)) {
-        messageIds.current.add(msgUniqueId);
+      if (!messageIds.current.has(msg.id)) {
+        messageIds.current.add(msg.id);
         setMessages((prev) => [...prev, msg]);
       }
     });
@@ -88,11 +99,9 @@ const LiveCallPage = () => {
     });
 
     socket.on("stream-ended", () => navigate(-1));
-    
-    // Join logic
-    socket.emit("join-live-room", { astroId, role: "viewer" });
 
     return () => {
+      socket.off("connect", joinRoom);
       socket.off("offer-from-astro");
       socket.off("update-viewers");
       socket.off("receive-message");
@@ -103,32 +112,39 @@ const LiveCallPage = () => {
   }, [astroId, navigate]);
 
   const handleSendMessage = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!chatInput.trim()) return;
+    e.preventDefault();
+    if (!chatInput.trim()) return;
 
-  const myMsg = { 
-    roomId: `live_room_${astroId}`, // Prefix confirm karein
-    user: "User", 
-    text: chatInput, 
-    id: `${socket.id}-${Date.now()}` 
+    const msgId = `${socket.id}-${Date.now()}`;
+    const myMsg = { 
+      roomId: `live_room_${astroId}`, // Prefix matching backend
+      user: "You", 
+      text: chatInput, 
+      id: msgId 
+    };
+
+    // Optimistic Update: Add to UI immediately
+    if (!messageIds.current.has(msgId)) {
+      messageIds.current.add(msgId);
+      setMessages((prev) => [...prev, myMsg]);
+    }
+
+    socket.emit("send-message", myMsg);
+    setChatInput("");
   };
 
-  console.log("Sending Message Data:", myMsg); // Browser console mein check karein
-  socket.emit("send-message", myMsg);
-  setChatInput("");
-};
-
   return (
-    <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans">
-      <div className="w-full max-w-[450px] relative bg-black shadow-2xl overflow-hidden flex flex-col">
-        {/* Header Overlay */}
-        <div className="absolute top-0 left-0 w-full p-4 z-50 flex justify-between items-start bg-gradient-to-b from-black/70 to-transparent">
+    <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans overflow-hidden">
+      <div className="w-full max-w-[450px] relative bg-black shadow-2xl flex flex-col h-full">
+        
+        {/* Header */}
+        <div className="absolute top-0 left-0 w-full p-4 z-50 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full border-2 border-yellow-500 overflow-hidden bg-zinc-800">
               <img src="/banners/astrouser.jpg" alt="Astro" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h3 className="text-white text-sm font-bold flex items-center gap-1">Astro Live</h3>
+              <h3 className="text-white text-sm font-bold">Astro Live</h3>
               <div className="flex items-center gap-2">
                 <span className="bg-red-600 text-[10px] px-2 py-0.5 rounded font-black text-white animate-pulse">LIVE</span>
                 <span className="text-zinc-300 text-[10px] flex items-center gap-1"><Users size={10} /> {viewers}</span>
@@ -138,17 +154,18 @@ const LiveCallPage = () => {
           <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full text-white"><X size={20} /></button>
         </div>
 
-        {/* Video Screen */}
-        <div className="flex-1 relative flex items-center justify-center bg-zinc-900">
+        {/* Video Area */}
+        <div className="flex-1 relative bg-zinc-900 flex items-center justify-center">
           <video ref={remoteVideoRef} autoPlay playsInline muted={isMuted} className="w-full h-full object-cover" />
           
+          {/* Chat Messages Overlay */}
           <div 
             ref={chatContainerRef}
-            className="absolute bottom-28 left-0 w-full px-4 max-h-40 overflow-y-auto z-40 flex flex-col gap-1 scrollbar-hide"
+            className="absolute bottom-28 left-0 w-full px-4 max-h-[40%] overflow-y-auto z-40 flex flex-col gap-2 scrollbar-hide"
           >
             {messages.map((m, i) => (
-              <div key={i} className="flex items-start">
-                <div className="text-white text-xs bg-black/40 p-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
+              <div key={m.id || i} className="flex items-start">
+                <div className="text-white text-xs bg-black/50 p-2 rounded-xl border border-white/10 backdrop-blur-md max-w-[85%] break-words">
                   <span className="font-bold text-yellow-400">{m.user}: </span>{m.text}
                 </div>
               </div>
@@ -163,26 +180,29 @@ const LiveCallPage = () => {
         </div>
 
         {/* Input Area */}
-        <div className="absolute bottom-0 left-0 w-full p-6 z-50 bg-gradient-to-t from-black/80 to-transparent flex gap-3 items-center">
+        <div className="p-4 pb-8 bg-gradient-to-t from-black to-transparent flex gap-2 items-center">
           <form onSubmit={handleSendMessage} className="flex-1 flex gap-2">
             <input 
               type="text" 
               value={chatInput} 
               onChange={(e) => setChatInput(e.target.value)} 
               placeholder="Chat with Astro..." 
-              className="flex-1 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 text-white text-sm outline-none border border-white/10" 
+              className="flex-1 bg-white/10 backdrop-blur-xl rounded-full px-4 py-3 text-white text-sm outline-none border border-white/20" 
             />
-            <button type="submit" className="bg-yellow-500 p-2 rounded-full text-black"><Send size={18}/></button>
+            <button type="submit" className="bg-yellow-500 p-3 rounded-full text-black hover:bg-yellow-400 transition-colors">
+              <Send size={18}/>
+            </button>
           </form>
           <button onClick={() => setIsMuted(!isMuted)} className="p-3 rounded-full bg-white/10 text-white">
-            {!isMuted ? <Volume2 size={24} /> : <VolumeX size={24} />}
+            {!isMuted ? <Volume2 size={22} /> : <VolumeX size={22} />}
           </button>
         </div>
 
+        {/* Loader Overlay */}
         {status === "Connecting..." && (
-          <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-zinc-950/90">
-            <div className="w-12 h-12 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin mb-4"></div>
-            <p className="text-yellow-500 font-bold tracking-widest text-xs">CONNECTING TO LIVE...</p>
+          <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-black/90">
+            <div className="w-10 h-10 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-yellow-500 font-bold tracking-widest text-xs">CONNECTING...</p>
           </div>
         )}
       </div>
@@ -191,5 +211,3 @@ const LiveCallPage = () => {
 };
 
 export default LiveCallPage;
-
-

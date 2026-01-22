@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 const API_URL = "https://listee-backend.onrender.com";
 const socket = io(API_URL, {
   // Render par 'websocket' priority dena sabse zaroori hai
-  transports: ["websocket", "polling"], 
+  transports: ["websocket"], 
   withCredentials: true, // Spelling fix ki gayi hai
   autoConnect: true,
   reconnection: true,
@@ -14,6 +14,7 @@ const socket = io(API_URL, {
 });
 
 export default socket;
+
 
 
 

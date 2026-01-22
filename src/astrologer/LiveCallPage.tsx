@@ -144,7 +144,7 @@ const LiveCallPage = () => {
               <img src="/banners/astrouser.jpg" alt="Astro" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h3 className="text-white text-sm font-bold">Astro Live</h3>
+              <h3 className="text-white text-sm font-bold">Astro Live1</h3>
               <div className="flex items-center gap-2">
                 <span className="bg-red-600 text-[10px] px-2 py-0.5 rounded font-black text-white animate-pulse">LIVE</span>
                 <span className="text-zinc-300 text-[10px] flex items-center gap-1"><Users size={10} /> {viewers}</span>
@@ -211,3 +211,4 @@ const LiveCallPage = () => {
 };
 
 export default LiveCallPage;
+

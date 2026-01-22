@@ -11,110 +11,81 @@ const AstroLiveHost = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const pcs = useRef<{ [key: string]: RTCPeerConnection }>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const messageIds = useRef(new Set());
 
-  const ASTRO_ID = "6958bde63adbac9b1c1da23e"; 
+  const ASTRO_ID = "6958bde63adbac9b1c1da23e";
   const ROOM_ID = `live_room_${ASTRO_ID}`;
 
   const startLive = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(e => console.error("Video Play Error:", e));
-      }
+      if (videoRef.current) videoRef.current.srcObject = stream;
       setIsLive(true);
       
-      // Dono join events bhejna zaroori hai
       socket.emit("join", ASTRO_ID); 
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) {
-      alert("Please allow Camera and Mic permissions!");
-    }
-  };
-
-  const stopLive = () => {
-    if (window.confirm("End stream?")) {
-      socket.emit("end-stream", { astroId: ASTRO_ID });
-      streamRef.current?.getTracks().forEach(t => t.stop());
-      setIsLive(false);
-      setMessages([]);
-      setViewers(0);
-    }
+    } catch (err) { alert("Camera Error"); }
   };
 
   useEffect(() => {
-    socket.on("update-viewers", (count) => setViewers(count));
-    
-    socket.on("receive-message", (msg) => {
-      if (!messageIds.current.has(msg.id)) {
-        messageIds.current.add(msg.id);
-        setMessages(prev => [...prev, msg]);
-      }
-    });
-
     socket.on("new-viewer", async ({ viewerId }) => {
       const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
       pcs.current[viewerId] = pc;
+
+      // Add tracks to connection
       streamRef.current?.getTracks().forEach(t => pc.addTrack(t, streamRef.current!));
-      
+
+      // ICE Candidates bhejma (MUST)
+      pc.onicecandidate = (e) => {
+        if (e.candidate) socket.emit("ice-candidate", { to: viewerId, candidate: e.candidate });
+      };
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit("send-offer-to-viewer", { to: viewerId, offer });
     });
 
+    socket.on("answer-from-viewer", async ({ from, answer }) => {
+      const pc = pcs.current[from];
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on("ice-candidate", ({ candidate, from }) => {
+      const pc = pcs.current[from];
+      if (pc) pc.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
+    socket.on("update-viewers", (count) => setViewers(count));
+    socket.on("receive-message", (msg) => setMessages(prev => [...prev, msg]));
+
     return () => {
+      socket.off("new-viewer");
+      socket.off("answer-from-viewer");
+      socket.off("ice-candidate");
       socket.off("update-viewers");
       socket.off("receive-message");
-      socket.off("new-viewer");
     };
   }, []);
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col overflow-hidden">
-      {/* 1. Header Layer */}
-      <div className="relative z-[100]"><Header /></div>
-
-      {/* 2. Video Layer */}
-      <div className="absolute inset-0 z-0">
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          muted 
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* 3. Overlay Content (Chat & Stats) */}
-      <div className="relative flex-1 z-50 pointer-events-none">
-        {isLive && (
-          <div className="absolute top-20 left-4 bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">
-            LIVE • {viewers}
-          </div>
-        )}
-
-        {/* Chat - pointer-events-auto makes it scrollable again */}
-        <div ref={chatContainerRef} className="absolute bottom-48 left-0 w-full px-4 max-h-[200px] overflow-y-auto pointer-events-auto flex flex-col gap-2 scrollbar-hide">
+      <div className="relative z-50"><Header /></div>
+      <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover z-0" />
+      
+      <div className="relative z-10 flex-1 flex flex-col justify-end p-4 pb-32">
+        {isLive && <div className="absolute top-20 left-4 bg-red-600 px-2 py-1 rounded text-white text-[10px] font-bold">LIVE • {viewers}</div>}
+        <div ref={chatContainerRef} className="max-h-[150px] overflow-y-auto flex flex-col gap-2 mb-4 scrollbar-hide">
           {messages.map((m, i) => (
-            <div key={m.id || i} className="bg-black/50 backdrop-blur-sm p-2 rounded-xl self-start border border-white/10">
-              <p className="text-white text-xs"><span className="text-yellow-400 font-bold">{m.user}:</span> {m.text}</p>
+            <div key={i} className="bg-black/40 p-2 rounded-lg text-white text-xs self-start">
+              <span className="text-yellow-400 font-bold">{m.user}: </span>{m.text}
             </div>
           ))}
         </div>
-      </div>
-
-      {/* 4. Controls & Navigation */}
-      <div className="relative z-[100] bg-gradient-to-t from-black to-transparent pt-10 pb-2 px-6">
-        <button 
-          onClick={isLive ? stopLive : startLive}
-          className={`w-full py-4 rounded-full font-bold mb-4 shadow-xl ${isLive ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}
-        >
+        <button onClick={isLive ? () => setIsLive(false) : startLive} className={`w-full py-4 rounded-full font-bold ${isLive ? 'bg-red-600' : 'bg-yellow-500'}`}>
           {isLive ? "STOP LIVE" : "START LIVE"}
         </button>
-        <BottomNav />
       </div>
+      <div className="relative z-50 bg-black"><BottomNav /></div>
     </div>
   );
 };

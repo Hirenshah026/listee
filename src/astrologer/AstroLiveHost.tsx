@@ -67,25 +67,29 @@ const AstroLiveHost = () => {
       socket.emit("join", ASTRO_ID); 
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
     } catch (err) {
-      alert("Camera/Mic Permission Required");
+      console.error("Permission denied");
     }
   };
 
   const stopLive = () => {
+    // Bina alert ke direct signals bhejein
     socket.emit("end-stream", { astroId: ASTRO_ID });
-    if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    
     Object.values(pcs.current).forEach(pc => pc.close());
     pcs.current = {};
     setIsLive(false);
-    navigate("/");
+    
+    // Redirect direct smoothly
+    navigate("/"); 
   };
 
   return (
-    // Outer Container: Laptop par center karne ke liye
     <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans overflow-hidden">
-      
-      {/* Main Mobile Frame */}
-      <div className="w-full max-w-[450px] relative bg-black shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
+      <div className="w-full max-w-[450px] relative bg-black shadow-2xl flex flex-col border-x border-white/5">
         
         {/* Header Overlay */}
         <div className="absolute top-0 left-0 w-full z-50 p-4 pt-6 bg-gradient-to-b from-black/80 to-transparent">
@@ -95,75 +99,62 @@ const AstroLiveHost = () => {
                 <img src="/banners/astrouser.jpg" alt="Host" className="w-full h-full rounded-full object-cover" />
               </div>
               <div>
-                <p className="text-white text-sm font-bold leading-none mb-1">Your Live Stream</p>
-                <div className="flex items-center gap-2">
-                  <span className="bg-red-600 text-[9px] px-1.5 py-0.5 rounded font-black text-white uppercase tracking-tighter">Live</span>
-                  <span className="text-white/80 text-[11px] flex items-center gap-1 font-medium">
-                    <Users size={12} className="text-yellow-500" /> {viewers}
-                  </span>
-                </div>
+                <p className="text-white text-sm font-bold">Astro Master</p>
+                {isLive && (
+                  <div className="flex items-center gap-2">
+                    <span className="bg-red-600 text-[9px] px-1.5 py-0.5 rounded font-black text-white uppercase animate-pulse">Live</span>
+                    <span className="text-white/80 text-[11px] flex items-center gap-1 font-medium">
+                      <Users size={12} className="text-yellow-500" /> {viewers}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             
             {isLive && (
-              <button onClick={stopLive} className="bg-white/10 hover:bg-red-600/20 text-white hover:text-red-500 p-2 rounded-full transition-all">
+              <button onClick={stopLive} className="bg-white/10 p-2 rounded-full text-white/70 hover:text-red-500 transition-colors">
                 <XCircle size={24} />
               </button>
             )}
           </div>
         </div>
 
-        {/* Video Section */}
+        {/* Video Area */}
         <div className="flex-1 bg-zinc-900 relative">
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            className="w-full h-full object-cover" 
-          />
+          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           
-          {/* Pre-Live UI */}
           {!isLive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm z-[60] p-6 text-center">
-              <div className="w-24 h-24 bg-yellow-500/20 rounded-full flex items-center justify-center mb-6 border-2 border-yellow-500/50">
-                <Power size={48} className="text-yellow-500 animate-pulse" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-[60] p-8 text-center">
+              <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6 border border-yellow-500/30">
+                <Power size={40} className="text-yellow-500" />
               </div>
-              <h2 className="text-white font-black text-2xl mb-2 italic">ASTRO LIVE</h2>
-              <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
-                Ready to guide your followers? <br/> Set your vibe and start broadcasting.
-              </p>
+              <h2 className="text-white font-bold text-2xl mb-2">Go Live Today</h2>
+              <p className="text-zinc-500 text-sm mb-8 leading-relaxed">Start your session to guide and connect with your followers instantly.</p>
               <button 
                 onClick={startLive} 
-                className="bg-yellow-500 text-black font-black px-10 py-4 rounded-2xl shadow-[0_10px_30px_rgba(234,179,8,0.3)] hover:scale-105 active:scale-95 transition-all w-full"
+                className="bg-yellow-500 text-black font-black px-10 py-4 rounded-full shadow-lg active:scale-95 transition-all w-full tracking-wide"
               >
-                GO LIVE NOW
+                START BROADCASTING
               </button>
             </div>
           )}
 
-          {/* Chat List Overlay (Visible only when Live) */}
           {isLive && (
-            <div className="absolute bottom-24 left-0 w-full px-4 flex flex-col gap-2 max-h-[40%] overflow-y-auto scrollbar-hide z-40">
-              <div className="flex flex-col gap-2">
-                {messages.map((m, i) => (
-                  <div key={i} className="animate-in slide-in-from-left-2 duration-300">
-                    <div className="bg-black/30 backdrop-blur-md border border-white/5 px-3 py-2 rounded-xl inline-block max-w-[90%]">
-                      <p className="text-[13px] leading-snug">
-                        <span className="text-yellow-400 font-bold mr-1.5">{m.user}</span>
-                        <span className="text-white/90 font-medium">{m.text}</span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
-              </div>
+            <div className="absolute bottom-24 left-0 w-full px-4 flex flex-col gap-2 max-h-[40%] overflow-y-auto scrollbar-hide">
+              {messages.map((m, i) => (
+                <div key={i} className="bg-black/40 backdrop-blur-md border border-white/10 px-3 py-2 rounded-xl self-start max-w-[85%]">
+                  <p className="text-[13px]">
+                    <span className="text-yellow-400 font-bold mr-2">{m.user}:</span>
+                    <span className="text-white/90">{m.text}</span>
+                  </p>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
             </div>
           )}
         </div>
 
-        {/* Bottom Nav Space */}
-        <div className="bg-black pt-1">
+        <div className="bg-black">
           <BottomNav />
         </div>
       </div>

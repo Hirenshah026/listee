@@ -29,36 +29,35 @@ const AstroLiveHost = () => {
       if (videoRef.current) videoRef.current.srcObject = stream;
       setIsLive(true);
       
-      // Step 1: Register Astro ID
       socket.emit("join", ASTRO_ID);
-      // Step 2: Join Live Room (For Chat and Count)
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) { alert("Camera Permission Error"); }
+    } catch (err) { alert("Camera access denied!"); }
   };
 
   const stopLive = () => {
+    // Backend ko batao stream khatam (Taki viewer wapas chala jaye)
     socket.emit("end-stream", { astroId: ASTRO_ID });
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
     Object.values(pcs.current).forEach(pc => pc.close());
     pcs.current = {};
     setIsLive(false);
     setViewers(0);
     setMessages([]);
+    messageIds.current.clear();
   };
 
   useEffect(() => {
-    // Viewer count update logic
-    socket.on("update-viewers", (count) => {
-      console.log("Count received on Host:", count);
-      setViewers(count);
-    });
+    socket.on("update-viewers", (count) => setViewers(count));
 
-    // Message receive logic
-    socket.on("receive-message", (data) => {
-      console.log("Message received on Host:", data);
-      if (!messageIds.current.has(data.id)) {
-        messageIds.current.add(data.id);
-        setMessages((prev) => [...prev, data]);
+    socket.on("receive-message", (msg) => {
+      console.log("Host got message:", msg);
+      if (!messageIds.current.has(msg.id)) {
+        messageIds.current.add(msg.id);
+        setMessages((prev) => [...prev, msg]);
       }
     });
 
@@ -88,14 +87,14 @@ const AstroLiveHost = () => {
   }, []);
 
   return (
-    <div className="flex justify-center bg-zinc-950 h-screen overflow-hidden font-sans">
-      <div className="w-full max-w-[450px] flex flex-col bg-black relative border-x border-zinc-800 shadow-2xl h-full">
+    <div className="flex justify-center bg-black h-screen overflow-hidden font-sans">
+      <div className="w-full max-w-[450px] flex flex-col relative border-x border-zinc-800 h-full">
         <Header />
         <main className="flex-1 relative bg-zinc-900 overflow-hidden">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           
           {isLive && (
-            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-[10px] font-black z-20 animate-pulse">
+            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-[10px] font-black z-20">
               LIVE • {viewers}
             </div>
           )}

@@ -11,7 +11,7 @@ const AstroLiveHost = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const pcs = useRef<{ [key: string]: RTCPeerConnection }>({});
 
-  const ASTRO_ID = "6958bde63adbac9b1c1da23e";
+  const ASTRO_ID = "6958bde63adbac9b1c1da23e"; 
 
   const startLive = async () => {
     try {
@@ -19,12 +19,19 @@ const AstroLiveHost = () => {
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setIsLive(true);
+      
       socket.emit("join", ASTRO_ID); 
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) { alert("Camera Permission Required"); }
+    } catch (err) { alert("Camera permit kijiye!"); }
   };
 
   useEffect(() => {
+    socket.on("update-viewers", (count) => setViewers(count));
+    
+    socket.on("receive-message", (msg) => {
+      setMessages(prev => [...prev, msg]);
+    });
+
     socket.on("new-viewer", async ({ viewerId }) => {
       const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
       pcs.current[viewerId] = pc;
@@ -49,18 +56,15 @@ const AstroLiveHost = () => {
 
     socket.on("ice-candidate", ({ candidate, from }) => {
       const pc = pcs.current[from];
-      if (pc) pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
+      if (pc) pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
     });
 
-    socket.on("update-viewers", (count) => setViewers(count));
-    socket.on("receive-message", (msg) => setMessages(prev => [...prev, msg]));
-
     return () => {
+      socket.off("update-viewers");
+      socket.off("receive-message");
       socket.off("new-viewer");
       socket.off("answer-from-viewer");
       socket.off("ice-candidate");
-      socket.off("update-viewers");
-      socket.off("receive-message");
     };
   }, []);
 
@@ -69,7 +73,8 @@ const AstroLiveHost = () => {
       <div className="z-50"><Header /></div>
       <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover z-0" />
       <div className="relative z-10 flex-1 flex flex-col justify-end p-4 pb-32">
-        <div className="max-h-[150px] overflow-y-auto mb-4 flex flex-col gap-2">
+        {isLive && <div className="absolute top-24 left-4 bg-red-600 px-2 py-1 rounded text-white text-[10px] font-bold">LIVE • {viewers}</div>}
+        <div className="max-h-[150px] overflow-y-auto flex flex-col gap-2 mb-4 scrollbar-hide pointer-events-auto">
           {messages.map((m, i) => (
             <div key={i} className="bg-black/40 p-2 rounded text-white text-xs self-start">
               <span className="text-yellow-400 font-bold">{m.user}: </span>{m.text}
@@ -80,7 +85,7 @@ const AstroLiveHost = () => {
           {isLive ? "STOP LIVE" : "START LIVE"}
         </button>
       </div>
-      <div className="z-50 bg-black"><BottomNav /></div>
+      <div className="z-50 bg-black shadow-[0_-10px_20px_rgba(0,0,0,0.5)]"><BottomNav /></div>
     </div>
   );
 };

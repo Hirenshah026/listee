@@ -11,7 +11,7 @@ const AstroLiveHost = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const pcs = useRef<{ [key: string]: RTCPeerConnection }>({});
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const ASTRO_ID = "6958bde63adbac9b1c1da23e";
+  const ASTRO_ID = "6958bde63adbac9b1c1da23e"; // Aapki Astro ID
   const messageIds = useRef(new Set());
 
   useEffect(() => {
@@ -19,19 +19,6 @@ const AstroLiveHost = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
-
-  // Fix: Re-join room if socket reconnects during live
-  useEffect(() => {
-    const handleReconnect = () => {
-      if (isLive) {
-        console.log("Reconnecting host to live room...");
-        socket.emit("join", ASTRO_ID);
-        socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-      }
-    };
-    socket.on("connect", handleReconnect);
-    return () => { socket.off("connect", handleReconnect); };
-  }, [isLive]);
 
   const startLive = async () => {
     try {
@@ -43,7 +30,7 @@ const AstroLiveHost = () => {
       socket.emit("join", ASTRO_ID);
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
     } catch (err) { 
-      alert("Camera access denied!"); 
+      alert("Please allow Camera/Mic access."); 
     }
   };
 
@@ -51,39 +38,30 @@ const AstroLiveHost = () => {
     socket.emit("end-stream", { astroId: ASTRO_ID });
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
     }
-    if (videoRef.current) videoRef.current.srcObject = null;
     Object.values(pcs.current).forEach(pc => pc.close());
     pcs.current = {};
     setIsLive(false);
     setViewers(0);
     setMessages([]);
-    messageIds.current.clear();
   };
 
   useEffect(() => {
+    // WebRTC Signaling Logic
     socket.on("new-viewer", async ({ viewerId }) => {
-      if (pcs.current[viewerId]) return;
+      console.log("New Viewer:", viewerId);
       const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
       pcs.current[viewerId] = pc;
+
       streamRef.current?.getTracks().forEach(track => pc.addTrack(track, streamRef.current!));
+
       pc.onicecandidate = (e) => {
         if (e.candidate) socket.emit("ice-candidate", { to: viewerId, candidate: e.candidate });
       };
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit("send-offer-to-viewer", { to: viewerId, offer });
-    });
-
-    socket.on("update-viewers", (count) => setViewers(count));
-
-    socket.on("receive-message", (msg) => {
-      console.log("Host received message:", msg); // Check this in console
-      if (!messageIds.current.has(msg.id)) {
-        messageIds.current.add(msg.id);
-        setMessages((prev) => [...prev, msg]);
-      }
     });
 
     socket.on("answer-from-viewer", async ({ from, answer }) => {
@@ -93,7 +71,16 @@ const AstroLiveHost = () => {
 
     socket.on("ice-candidate", async ({ from, candidate }) => {
       const pc = pcs.current[from];
-      if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
+      if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
+    socket.on("update-viewers", (count) => setViewers(count));
+
+    socket.on("receive-message", (msg) => {
+      if (!messageIds.current.has(msg.id)) {
+        messageIds.current.add(msg.id);
+        setMessages((prev) => [...prev, msg]);
+      }
     });
 
     return () => {
@@ -106,33 +93,31 @@ const AstroLiveHost = () => {
   }, []);
 
   return (
-    <div className="flex justify-center bg-zinc-950 h-[100dvh] overflow-hidden">
-      <div className="w-full max-w-[450px] flex flex-col bg-black relative border-x border-zinc-800 shadow-2xl h-full">
+    <div className="flex justify-center bg-black h-screen overflow-hidden">
+      <div className="w-full max-w-[450px] flex flex-col bg-zinc-900 relative">
         <Header />
-        <main className="flex-1 relative bg-zinc-900 overflow-hidden">
+        <main className="flex-1 relative overflow-hidden bg-black">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           
           {isLive && (
-            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-[10px] font-black z-20 animate-pulse">
+            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold z-20">
               LIVE • {viewers}
             </div>
           )}
 
-          {/* Messages Overlay */}
-          <div ref={chatContainerRef} className="absolute bottom-32 left-0 w-full px-4 max-h-[200px] overflow-y-auto z-30 flex flex-col gap-2 scrollbar-hide">
+          {/* Messages */}
+          <div ref={chatContainerRef} className="absolute bottom-32 left-0 w-full px-4 max-h-[180px] overflow-y-auto z-20 flex flex-col gap-2 scrollbar-hide">
             {messages.map((m, i) => (
               <div key={m.id || i} className="flex items-start">
-                <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl rounded-tl-none">
-                  <p className="text-[13px] text-white">
-                    <span className="font-bold text-yellow-500 mr-1">{m.user}:</span>{m.text}
-                  </p>
+                <div className="bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-white text-xs">
+                  <span className="font-bold text-yellow-500 mr-1">{m.user}:</span>{m.text}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="absolute bottom-10 w-full px-10 z-40">
-            <button onClick={isLive ? stopLive : startLive} className={`w-full py-4 rounded-full font-bold transition-all shadow-lg active:scale-95 ${isLive ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}>
+          <div className="absolute bottom-10 w-full px-10 z-30">
+            <button onClick={isLive ? stopLive : startLive} className={`w-full py-4 rounded-full font-bold shadow-2xl ${isLive ? 'bg-red-600 text-white' : 'bg-yellow-500 text-black'}`}>
               {isLive ? "END LIVE" : "GO LIVE"}
             </button>
           </div>

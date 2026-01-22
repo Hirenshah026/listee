@@ -23,21 +23,24 @@ const AstroLiveHost = () => {
     socket.on("update-viewers", (count) => setViewers(count));
     socket.on("receive-message", (msg) => setMessages((prev) => [...prev, msg]));
 
+    // --- LAPTOP FIX: Stronger Handshake ---
     socket.on("new-viewer", async ({ viewerId }) => {
-      // Laptop to Mobile handshake fix
+      if (!streamRef.current) return;
+
       const pc = new RTCPeerConnection({
         iceServers: [
           { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:stun1.l.google.com:19302" }
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun2.l.google.com:19302" },
         ],
       });
-      
+
       pcs.current[viewerId] = pc;
 
-      // Tracks add karna
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => pc.addTrack(track, streamRef.current!));
-      }
+      // Laptop stream ko viewer ke connection mein add karna
+      streamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, streamRef.current!);
+      });
 
       pc.onicecandidate = (e) => {
         if (e.candidate) {
@@ -45,12 +48,17 @@ const AstroLiveHost = () => {
         }
       };
 
-      const offer = await pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true
-      });
-      await pc.setLocalDescription(offer);
-      socket.emit("send-offer-to-viewer", { to: viewerId, offer });
+      try {
+        // Laptop ke liye specific constraints
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true
+        });
+        await pc.setLocalDescription(offer);
+        socket.emit("send-offer-to-viewer", { to: viewerId, offer });
+      } catch (err) {
+        console.error("Offer creation failed", err);
+      }
     });
 
     socket.on("answer-from-viewer", async ({ from, answer }) => {
@@ -63,7 +71,7 @@ const AstroLiveHost = () => {
     socket.on("ice-candidate", ({ candidate, from }) => {
       const pc = pcs.current[from];
       if (pc) {
-        pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error(e));
+        pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
       }
     });
 
@@ -78,33 +86,24 @@ const AstroLiveHost = () => {
 
   const startLive = async () => {
     try {
-      // Laptop camera ke liye ideal resolution set kiya hai
-      const constraints = {
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: "user"
-        },
-        audio: true
+      // Laptop ke liye standard resolution (High Res laptop viewers ke phone par lag karega)
+      const constraints = { 
+        video: { width: 640, height: 480, frameRate: 24 }, 
+        audio: true 
       };
-
+      
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Laptop Chrome fix: Force play
-        videoRef.current.play().catch(e => console.log("Auto-play blocked", e));
       }
-
       setIsLive(true);
       setMessages([]);
       setViewers(0);
       socket.emit("join", ASTRO_ID); 
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
     } catch (err) {
-      console.error("Camera access error:", err);
-      alert("Please allow camera access in your browser settings.");
+      alert("Camera access denied! Please check site settings.");
     }
   };
 
@@ -123,7 +122,7 @@ const AstroLiveHost = () => {
     <div className="flex justify-center bg-zinc-950 h-[100dvh] w-full fixed inset-0 font-sans overflow-hidden">
       <div className="w-full max-w-[450px] relative bg-black shadow-2xl flex flex-col border-x border-white/5">
         
-        {/* Header Section */}
+        {/* Header */}
         <div className="absolute top-0 left-0 w-full z-50 p-4 pt-6 bg-gradient-to-b from-black/90 to-transparent">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -144,46 +143,45 @@ const AstroLiveHost = () => {
             </div>
             
             {isLive && (
-              <button onClick={stopLive} className="bg-red-600 text-white text-[10px] font-black px-4 py-2 rounded-lg active:scale-90 shadow-lg border border-red-500/50">
+              <button onClick={stopLive} className="bg-red-600 text-white text-[10px] font-black px-4 py-2 rounded-lg active:scale-90 border border-red-500/50 shadow-lg">
                 END LIVE
               </button>
             )}
           </div>
         </div>
 
-        {/* Video Area */}
-        <div className="flex-1 bg-zinc-900 relative overflow-hidden">
-          {/* Added playsInline and muted for laptop compatibility */}
+        {/* Video Player */}
+        <div className="flex-1 bg-zinc-900 relative">
           <video 
             ref={videoRef} 
             autoPlay 
             playsInline 
             muted 
-            className="w-full h-full object-cover mirror" // 'mirror' class laptop ke liye acchi hoti hai
-            style={{ transform: 'scaleX(-1)' }} // Laptop webcam mirror effect
+            className="w-full h-full object-cover"
+            style={{ transform: "scaleX(-1)" }} // Laptop Mirror Effect
           />
           
           {!isLive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 z-[60] p-8 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-[60] p-8 text-center">
               <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6 border border-yellow-500/30">
                 <Power size={40} className="text-yellow-500" />
               </div>
-              <h2 className="text-white font-bold text-2xl mb-2 tracking-tight italic uppercase">Astro Center</h2>
-              <p className="text-zinc-500 text-xs mb-8">Ensure your laptop camera is not being used by another app.</p>
+              <h2 className="text-white font-bold text-2xl mb-2 tracking-tight">ASTRO DASHBOARD</h2>
+              <p className="text-zinc-500 text-sm mb-10 leading-relaxed px-4">Laptop mode: Ensure your browser is using HTTPS for a stable connection.</p>
               <button onClick={startLive} className="bg-yellow-500 text-black font-black px-10 py-4 rounded-2xl shadow-xl active:scale-95 transition-all w-full tracking-wider uppercase">
                 Start Live Now
               </button>
             </div>
           )}
 
-          {/* Chat Section */}
+          {/* Fixed Chat UI */}
           {isLive && (
             <div className="absolute bottom-24 left-0 w-full px-4 flex flex-col items-start gap-2 max-h-[40%] overflow-y-auto scrollbar-hide z-40">
               {messages.map((m, i) => (
                 <div key={i} className="flex flex-col items-start max-w-[85%]">
                   <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/10 inline-block shadow-lg">
                     <p className="text-[13px] leading-snug">
-                      <span className="text-yellow-300 font-extrabold mr-1.5 brightness-125">
+                      <span className="text-yellow-300 font-extrabold mr-1.5 brightness-125 drop-shadow-sm">
                         {m.user}:
                       </span>
                       <span className="text-white font-medium">

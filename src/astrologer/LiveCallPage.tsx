@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import socket from "../components/chat/socket";
-import { X, Volume2, VolumeX, Users, Star, Send } from "lucide-react";
+import { X, Volume2, VolumeX, Users, Send } from "lucide-react";
 
 const LiveCallPage = () => {
   const { astroId } = useParams();
@@ -13,9 +13,7 @@ const LiveCallPage = () => {
   const isSettingRemoteDescription = useRef(false);
   const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const messageIds = useRef(new Set());
 
-  // FIXED: Backend exactly ye string mangta hai chat ke liye
   const ROOM_ID = `live_room_${astroId}`;
 
   const [isMuted, setIsMuted] = useState(true);
@@ -71,22 +69,8 @@ const LiveCallPage = () => {
     };
 
     socket.on("offer-from-astro", handleOffer);
-    
-    // COUNT FIX
-    socket.on("update-viewers", (count) => {
-        console.log("Viewer Count Received:", count);
-        setViewers(count);
-    });
-    
-    // CHAT RECEIVE FIX
-    socket.on("receive-message", (msg) => {
-      console.log("New Message:", msg);
-      const msgUniqueId = msg.id || `${msg.user}-${msg.text}-${Date.now()}`;
-      if (!messageIds.current.has(msgUniqueId)) {
-        messageIds.current.add(msgUniqueId);
-        setMessages((prev) => [...prev, msg]);
-      }
-    });
+    socket.on("update-viewers", (count) => setViewers(count));
+    socket.on("receive-message", (msg) => setMessages((prev) => [...prev, msg]));
 
     socket.on("ice-candidate", async (data) => {
       if (!data.candidate) return;
@@ -99,7 +83,6 @@ const LiveCallPage = () => {
 
     socket.on("stream-ended", () => navigate(-1));
     
-    // JOIN LOGIC
     socket.emit("join-live-room", { astroId, role: "viewer" });
 
     return () => {
@@ -116,7 +99,6 @@ const LiveCallPage = () => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    // FIXED: roomId changed to ROOM_ID
     const myMsg = { 
       roomId: ROOM_ID, 
       user: "User", 
@@ -139,14 +121,14 @@ const LiveCallPage = () => {
               <img src="/banners/astrouser.jpg" alt="Astro" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h3 className="text-white text-sm font-bold flex items-center gap-1">Astro Live</h3>
+              <h3 className="text-white text-sm font-bold">Astro Live</h3>
               <div className="flex items-center gap-2">
                 <span className="bg-red-600 text-[10px] px-2 py-0.5 rounded font-black text-white animate-pulse">LIVE</span>
                 <span className="text-zinc-300 text-[10px] flex items-center gap-1"><Users size={10} /> {viewers}</span>
               </div>
             </div>
           </div>
-          <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full text-white pointer-events-auto"><X size={20} /></button>
+          <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full text-white"><X size={20} /></button>
         </div>
 
         {/* Video Screen */}
@@ -154,10 +136,7 @@ const LiveCallPage = () => {
           <video ref={remoteVideoRef} autoPlay playsInline muted={isMuted} className="w-full h-full object-cover" />
           
           {/* Messages Overlay */}
-          <div 
-            ref={chatContainerRef}
-            className="absolute bottom-28 left-0 w-full px-4 max-h-40 overflow-y-auto z-40 flex flex-col gap-1 scrollbar-hide pointer-events-auto"
-          >
+          <div ref={chatContainerRef} className="absolute bottom-28 left-0 w-full px-4 max-h-40 overflow-y-auto z-40 flex flex-col gap-1 scrollbar-hide">
             {messages.map((m, i) => (
               <div key={i} className="flex items-start">
                 <div className="text-white text-xs bg-black/40 p-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
@@ -184,7 +163,7 @@ const LiveCallPage = () => {
               placeholder="Chat with Astro..." 
               className="flex-1 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 text-white text-sm outline-none border border-white/10" 
             />
-            <button type="submit" className="bg-yellow-500 p-2 rounded-full text-black active:scale-90 transition-transform"><Send size={18}/></button>
+            <button type="submit" className="bg-yellow-500 p-2 rounded-full text-black"><Send size={18}/></button>
           </form>
           <button onClick={() => setIsMuted(!isMuted)} className="p-3 rounded-full bg-white/10 text-white">
             {!isMuted ? <Volume2 size={24} /> : <VolumeX size={24} />}
@@ -194,7 +173,7 @@ const LiveCallPage = () => {
         {status === "Connecting..." && (
           <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-zinc-950/90">
             <div className="w-12 h-12 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin mb-4"></div>
-            <p className="text-yellow-500 font-bold tracking-widest text-xs uppercase">Connecting to Live...</p>
+            <p className="text-yellow-500 font-bold tracking-widest text-xs uppercase">Connecting...</p>
           </div>
         )}
       </div>

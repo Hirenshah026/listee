@@ -56,7 +56,7 @@ const PoojaPage = () => {
           </div>
         </main>
 
-        <BottomNav activeTab="pooja" />
+        <BottomNav  />
       </div>
     </div>
   );

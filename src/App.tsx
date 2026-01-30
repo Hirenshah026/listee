@@ -42,14 +42,17 @@ import QuestionPage from "./admin/pages/question/QuestionPage";
 import MobileAuth from "./chatuser/MobileAuth";
 import AstrologerRegister from "./astrologer/AstrologerRegister";
 import AstrologerLogin from "./astrologer/AstrologerLogin";
-import AstrologerPage from "./astrologer/AstrologerPage";
-import HomePage from "./astrologer/HomePage";
-import ProfilePage from "./astrologer/ProfilePage";
+import AstrologerPage from "./astronew/AstrologerPage";
+import HomePage from "./astronew/HomePage2";
+import ProfilePage from "./astronew/ProfilePage";
 import ChatPage from "./astrologer/ChatPage";
-import AstrologerChatPage from "./astrologer/AstrologerChatPage";
+import AstrologerChatPage from "./astronew/AstrologerChatPage";
 import AstroLiveHost from "./astrologer/AstroLiveHost";
 import UserLiveList from "./astrologer/UserLiveList";
 import LiveCallPage from "./astrologer/LiveCallPage";
+import PanchangPage from "./astronew/PanchangPage";
+import CallPage from "./astronew/CallPage";
+
 export default function App() {
   return (
     <Router >
@@ -76,6 +79,8 @@ export default function App() {
         <Route path="astro/live" element={<AstroLiveHost />} />
         <Route path="astro/live/user" element={<UserLiveList />} />
         <Route path="/live-call/:astroId" element={<LiveCallPage />} />
+        <Route path="astro/panchang" element={<PanchangPage />} />
+        <Route path="call" element={<CallPage />} />
         {/* PROTECTED ROUTES */}
         <Route
           path="/doctor-panel/*"

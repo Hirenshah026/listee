@@ -1,11 +1,10 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
 import axios from "axios";
 import socket from "../components/chat/socket";
 import useUser from "../hooks/useUser";
 import Header from "./components/Header";
 import CallOverlay from "./CallOverlay";
-import BottomNavNew from "./components/BottomNavNew"; // Aapka naya component import ho raha hai
+import BottomNavNew from "./components/BottomNavNew";
 
 interface Message {
   _id?: string;
@@ -27,7 +26,6 @@ interface ChatUser {
   unreadCount?: number;
 }
 
-// WhatsApp Image Preview Component
 const WhatsAppImage = ({ src }: { src: string }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -82,7 +80,6 @@ const AstrologerChatPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,17 +87,22 @@ const AstrologerChatPage = () => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const API_URL = "https://listee-backend.onrender.com";
 
-  // Visual Viewport Height Fix for Mobile Keyboard
+  // Keyboard Fix: Visual Viewport handling
   useEffect(() => {
-    const handleVisualViewportResize = () => {
+    const handleResize = () => {
       if (window.visualViewport) {
-        document.documentElement.style.setProperty('--vh', `${window.visualViewport.height}px`);
+        const vh = window.visualViewport.height;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        // Keyboard khulne par scroll to bottom
+        if (selectedUser) {
+            setTimeout(() => scrollToBottom("smooth"), 100);
+        }
       }
     };
-    window.visualViewport?.addEventListener("resize", handleVisualViewportResize);
-    handleVisualViewportResize();
-    return () => window.visualViewport?.removeEventListener("resize", handleVisualViewportResize);
-  }, []);
+    window.visualViewport?.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.visualViewport?.removeEventListener("resize", handleResize);
+  }, [selectedUser]);
 
   const fetchUsersData = async () => {
     if (!ASTRO_ID) return;
@@ -164,8 +166,10 @@ const AstrologerChatPage = () => {
     scrollToBottom(messages.length <= 10 ? "auto" : "smooth");
   }, [messages]);
 
-  const sendMessage = async () => {
+  const sendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault(); // Keyboard close hone se bachane ke liye
     if ((!input.trim() && !selectedFile) || !selectedUser || !ASTRO_ID) return;
+
     const formData = new FormData();
     formData.append("senderId", ASTRO_ID);
     formData.append("receiverId", selectedUser._id);
@@ -173,13 +177,21 @@ const AstrologerChatPage = () => {
     if (selectedFile) formData.append("image", selectedFile);
 
     const tempInput = input;
-    setInput(""); setSelectedFile(null); setImagePreview(null);
+    setInput(""); 
+    setSelectedFile(null); 
+    setImagePreview(null);
+    
+    // Focus wapas input par rakhen taaki keyboard hide na ho
+    inputRef.current?.focus();
+
     try {
       const res = await axios.post(`${API_URL}/api/messages`, formData);
       setMessages(prev => [...prev, res.data.message]);
       socket.emit("sendMessage", res.data.message);
       fetchUsersData();
-    } catch (err) { setInput(tempInput); }
+    } catch (err) { 
+      setInput(tempInput); 
+    }
   };
 
   const formatTimer = (secs: number) => {
@@ -222,7 +234,6 @@ const AstrologerChatPage = () => {
                 </div>
               ))}
             </div>
-            {/* Yahan aapka naya component use hua hai */}
             <BottomNavNew />
           </>
         ) : (
@@ -230,7 +241,7 @@ const AstrologerChatPage = () => {
             <header className="flex-none bg-yellow-400 p-3 flex items-center justify-between shadow-md z-50">
               <div className="flex items-center gap-2">
                 <button onClick={() => { setSelectedUser(null); setMessages([]); fetchUsersData(); }} className="text-2xl font-bold pr-2">←</button>
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowProfileModal(true)}>
+                <div className="flex items-center gap-3">
                   <img src={selectedUser.image || "/banners/astrouser.jpg"} className="w-10 h-10 rounded-full border-2 border-white object-cover" />
                   <div>
                     <p className="font-bold leading-none text-[15px]">{selectedUser.name}</p>
@@ -267,13 +278,29 @@ const AstrologerChatPage = () => {
               <div ref={bottomRef} />
             </main>
 
-            <footer className="flex-none p-2 pb-5 bg-[#f0f2f5] flex items-center gap-2 border-t z-50">
+            {/* Input form - keyboard fix added here */}
+            <form 
+              onSubmit={sendMessage}
+              className="flex-none p-2 pb-5 bg-[#f0f2f5] flex items-center gap-2 border-t z-50"
+            >
               <div className="flex-1 bg-white rounded-3xl flex items-center px-3 py-1 border border-gray-200 shadow-sm">
-                <button onClick={() => fileInputRef.current?.click()} className="text-xl text-gray-500 mr-2 rotate-45">📎</button>
-                <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder="Type a message..." className="flex-1 bg-transparent outline-none py-2 text-[15px]" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xl text-gray-500 mr-2 rotate-45">📎</button>
+                <input 
+                  ref={inputRef} 
+                  value={input} 
+                  onChange={e => setInput(e.target.value)} 
+                  placeholder="Type a message..." 
+                  className="flex-1 bg-transparent outline-none py-2 text-[15px]" 
+                  onFocus={() => setTimeout(() => scrollToBottom("smooth"), 300)}
+                />
               </div>
-              <button onClick={sendMessage} className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-[#00a884] text-white active:scale-95 transition-all text-xl">➤</button>
-            </footer>
+              <button 
+                type="submit"
+                className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-[#00a884] text-white active:scale-95 transition-all text-xl"
+              >
+                ➤
+              </button>
+            </form>
           </div>
         )}
       </div>
@@ -285,9 +312,23 @@ const AstrologerChatPage = () => {
 
       {imagePreview && (
         <div className="fixed inset-0 bg-black z-[200] flex flex-col">
-          <header className="p-4 text-white flex justify-between items-center"><button onClick={() => { setImagePreview(null); setSelectedFile(null); }} className="text-2xl p-2">✕</button><span className="font-bold">Send Photo</span><div className="w-10"/></header>
-          <div className="flex-1 flex items-center justify-center"><img src={imagePreview} className="max-w-full max-h-[70vh] object-contain" /></div>
-          <div className="p-4 pb-10 flex gap-2 bg-black/60"><input value={input} onChange={e => setInput(e.target.value)} className="flex-1 bg-zinc-800 text-white p-3 rounded-2xl outline-none" placeholder="Add a caption..." /><button onClick={sendMessage} className="bg-[#00a884] w-12 h-12 rounded-full text-white text-xl">✔</button></div>
+          <header className="p-4 text-white flex justify-between items-center">
+            <button onClick={() => { setImagePreview(null); setSelectedFile(null); }} className="text-2xl p-2">✕</button>
+            <span className="font-bold">Send Photo</span>
+            <div className="w-10"/>
+          </header>
+          <div className="flex-1 flex items-center justify-center">
+            <img src={imagePreview} className="max-w-full max-h-[70vh] object-contain" />
+          </div>
+          <div className="p-4 pb-10 flex gap-2 bg-black/60">
+            <input 
+              value={input} 
+              onChange={e => setInput(e.target.value)} 
+              className="flex-1 bg-zinc-800 text-white p-3 rounded-2xl outline-none" 
+              placeholder="Add a caption..." 
+            />
+            <button onClick={() => sendMessage()} className="bg-[#00a884] w-12 h-12 rounded-full text-white text-xl">✔</button>
+          </div>
         </div>
       )}
     </div>

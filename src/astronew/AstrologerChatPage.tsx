@@ -31,31 +31,32 @@ interface ChatUser {
   pob?: string;
 }
 
-// --- Helper: Date Formatting (Today, Yesterday, Date) ---
+// --- Skeleton Component ---
+const UserSkeleton = () => (
+  <div className="flex items-center gap-3 p-3 border-b animate-pulse bg-white">
+    <div className="w-14 h-14 rounded-full bg-gray-200"></div>
+    <div className="flex-1 space-y-2">
+      <div className="flex justify-between">
+        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-3 bg-gray-200 rounded w-1/6"></div>
+      </div>
+      <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+    </div>
+  </div>
+);
+
+// --- Helper: Date Formatting ---
 const formatMessageDate = (dateStr: string) => {
   const date = new Date(dateStr);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  
-  const diffTime = today.getTime() - msgDate.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.ceil((today.getTime() - msgDate.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
   return date.toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
 };
-
-// --- Sub-Components ---
-const UserSkeleton = () => (
-  <div className="flex items-center gap-3 p-3 border-b animate-pulse">
-    <div className="w-14 h-14 rounded-full bg-gray-200"></div>
-    <div className="flex-1 space-y-2">
-      <div className="flex justify-between"><div className="h-4 bg-gray-200 rounded w-1/3"></div><div className="h-3 bg-gray-200 rounded w-1/6"></div></div>
-      <div className="h-3 bg-gray-100 rounded w-3/4"></div>
-    </div>
-  </div>
-);
 
 const BlueTick = ({ isRead }: { isRead: boolean }) => (
   <svg viewBox="0 0 24 24" width="15" height="15" className={isRead ? "text-[#53bdeb]" : "text-gray-400"}>
@@ -84,7 +85,6 @@ const AstrologerChatPage = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const API_URL = "https://listee-backend.onrender.com";
 
-  // Visual Viewport fix for Keyboard
   useEffect(() => {
     const handleResize = () => {
       if (window.visualViewport) {
@@ -99,6 +99,7 @@ const AstrologerChatPage = () => {
 
   const fetchUsersData = async () => {
     if (!ASTRO_ID) return;
+    setLoadingUsers(true);
     try {
       const res = await axios.get(`${API_URL}/api/messages/users/${ASTRO_ID}`);
       const userList = res.data.users || [];
@@ -167,12 +168,11 @@ const AstrologerChatPage = () => {
       const res = await axios.post(`${API_URL}/api/messages`, formData);
       setMessages(prev => [...prev, res.data.message]);
       socket.emit("sendMessage", res.data.message);
-      setUsers(prev => prev.map(u => u._id === selectedUser._id ? { ...u, lastMessage: tempInput || "📷 Photo", lastMessageTime: new Date().toISOString() } : u));
     } catch (err) { setInput(tempInput); }
   };
 
   return (
-    <div className="fixed inset-0 flex justify-center bg-zinc-300 overflow-hidden">
+    <div className="fixed inset-0 flex justify-center bg-gray-200 overflow-hidden font-sans">
       <div className="w-full max-w-[450px] flex flex-col bg-white shadow-2xl relative overflow-hidden" style={{ height: 'var(--vh, 100vh)' }}>
         
         <CallOverlay ref={callRef} userId={ASTRO_ID} targetUser={selectedUser} />
@@ -180,26 +180,25 @@ const AstrologerChatPage = () => {
         {!selectedUser ? (
           <>
             <Header />
-            <div className="flex-1 overflow-y-auto bg-white pb-28">
-              <div className="px-4 py-3 border-b text-orange-600 font-bold bg-orange-50 sticky top-0 z-10 uppercase text-[10px] tracking-widest">Recent Chats</div>
-              {loadingUsers ? [...Array(6)].map((_, i) => <UserSkeleton key={i} />) : users.map((u) => (
+            <div className="flex-1 overflow-y-auto pb-24 bg-white">
+              <div className="px-4 py-2 text-gray-400 font-bold text-[10px] uppercase tracking-widest bg-gray-50 border-b">Recent Chats</div>
+              {loadingUsers ? [...Array(8)].map((_, i) => <UserSkeleton key={i} />) : users.map((u) => (
                 <div key={u._id} onClick={() => {
                   setSelectedUser(u);
-                  setUsers(prev => prev.map(user => user._id === u._id ? { ...user, unreadCount: 0 } : user));
                   axios.get(`${API_URL}/api/messages/${ASTRO_ID}/${u._id}`).then(res => setMessages(res.data.messages || []));
                   axios.post(`${API_URL}/api/messages/mark-read`, { senderId: u._id, receiverId: ASTRO_ID });
-                }} className="flex items-center gap-3 p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors">
-                  <img src={u.image || "/banners/astrouser.jpg"} className="w-14 h-14 rounded-full object-cover border-2 border-orange-100 shadow-sm" />
-                  <div className="flex-1 truncate">
+                }} className="flex items-center gap-3 p-3 border-b border-gray-50 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer">
+                  <img src={u.image || "/banners/astrouser.jpg"} className="w-14 h-14 rounded-full object-cover border border-gray-100 shadow-sm" />
+                  <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
-                      <p className={`text-[15px] ${u.unreadCount! > 0 ? "font-bold text-black" : "font-semibold text-gray-800"}`}>
-                        {u.name} {u.mobile ? ` - ${u.mobile.slice(-4)}` : ""}
+                      <p className="font-bold text-[15px] text-gray-800 truncate">
+                        {u.name} {u.mobile ? <span className="text-[12px] font-normal text-gray-400">({u.mobile.slice(-4)})</span> : ""}
                       </p>
-                      <p className="text-[10px] text-gray-400 uppercase">{u.lastMessageTime !== "0" && new Date(u.lastMessageTime!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="text-[10px] text-gray-400 font-medium">{u.lastMessageTime !== "0" && new Date(u.lastMessageTime!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                     <div className="flex justify-between items-center">
-                       <p className={`text-[13px] truncate ${u.unreadCount! > 0 ? "text-gray-900 font-bold" : "text-gray-500"}`}>{u.lastMessage}</p>
-                       {u.unreadCount! > 0 && <span className="bg-green-500 text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center animate-pulse">{u.unreadCount}</span>}
+                      <p className="text-sm text-gray-500 truncate">{u.lastMessage}</p>
+                      {u.unreadCount! > 0 && <span className="bg-[#25d366] text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center">{u.unreadCount}</span>}
                     </div>
                   </div>
                 </div>
@@ -208,32 +207,29 @@ const AstrologerChatPage = () => {
             <BottomNavNew />
           </>
         ) : (
-          <div className="flex flex-col h-full bg-[#fdf8f2]">
-            {/* --- Chat Header (Mobile 4 digits added here) --- */}
-            <header className="flex-none bg-gradient-to-r from-yellow-500 to-orange-500 p-3 flex items-center justify-between shadow-lg z-50 text-white">
-              <div className="flex items-center gap-2">
-                <button onClick={() => { setSelectedUser(null); setMessages([]); fetchUsersData(); }} className="text-2xl font-bold pr-1 hover:scale-110 active:scale-90 transition-all">←</button>
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowProfile(true)}>
-                  <img src={selectedUser.image || "/banners/astrouser.jpg"} className="w-10 h-10 rounded-full border-2 border-white/50 object-cover shadow-md" />
-                  <div>
-                    <p className="font-bold leading-none text-[15px]">
-                      {selectedUser.name} {selectedUser.mobile ? <span className="text-[12px] opacity-90 font-medium">({selectedUser.mobile.slice(-4)})</span> : ""}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                       <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-sm"></span>
-                       <p className="text-[10px] font-bold text-yellow-50 bg-black/10 px-2 py-0.5 rounded-full uppercase">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</p>
-                    </div>
-                  </div>
+          <div className="flex flex-col h-full bg-[#efeae2]">
+            {/* --- White Chat Header --- */}
+            <header className="flex-none bg-white p-3 flex items-center gap-2 border-b z-50 shadow-sm">
+              <button onClick={() => { setSelectedUser(null); setMessages([]); fetchUsersData(); }} className="p-1 text-gray-600 hover:bg-gray-100 rounded-full transition-all">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
+              </button>
+              <div className="flex flex-1 items-center gap-3 cursor-pointer" onClick={() => setShowProfile(true)}>
+                <img src={selectedUser.image || "/banners/astrouser.jpg"} className="w-10 h-10 rounded-full object-cover border border-gray-100" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-800 text-[16px] leading-tight truncate">
+                    {selectedUser.name} {selectedUser.mobile ? <span className="text-[12px] font-medium text-gray-400">({selectedUser.mobile.slice(-4)})</span> : ""}
+                  </p>
+                  <p className="text-[11px] text-green-600 font-bold uppercase tracking-wider">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 pr-1">
-                <button onClick={() => callRef.current?.startCall('voice')} className="p-2 hover:bg-white/10 rounded-full transition-all">📞</button>
-                <button onClick={() => callRef.current?.startCall('video')} className="p-2 text-xl hover:bg-white/10 rounded-full transition-all">📹</button>
+              <div className="flex items-center gap-3 text-gray-500">
+                <button onClick={() => callRef.current?.startCall('voice')} className="p-1 hover:text-gray-800">📞</button>
+                <button onClick={() => callRef.current?.startCall('video')} className="p-1 hover:text-gray-800">📹</button>
               </div>
             </header>
 
-            {/* --- Chat Body --- */}
-            <main className="flex-1 overflow-y-auto p-4 space-y-4 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-fixed">
+            {/* --- Chat Content --- */}
+            <main className="flex-1 overflow-y-auto p-3 space-y-1 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-fixed">
               {messages.map((m, i) => {
                 const isMe = m.senderId === ASTRO_ID;
                 const showDate = i === 0 || formatMessageDate(messages[i-1].createdAt) !== formatMessageDate(m.createdAt);
@@ -241,20 +237,19 @@ const AstrologerChatPage = () => {
                 return (
                   <React.Fragment key={m._id || i}>
                     {showDate && (
-                      <div className="flex justify-center my-6">
-                        <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-4 py-1.5 rounded-full shadow-sm uppercase tracking-widest border border-orange-200">
+                      <div className="flex justify-center my-4">
+                        <span className="bg-[#e1f3fb] text-[#54656f] text-[11px] px-3 py-1 rounded-md shadow-sm uppercase font-semibold">
                           {formatMessageDate(m.createdAt)}
                         </span>
                       </div>
                     )}
-                    <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                      <div className={`p-2.5 rounded-2xl max-w-[85%] shadow-sm relative ${isMe ? "bg-[#fff4d6] rounded-tr-none border border-yellow-200" : "bg-white rounded-tl-none border border-gray-100"}`}>
-                        <p className={`text-[9px] font-black mb-1 uppercase tracking-tighter ${isMe ? "text-orange-600 text-right" : "text-yellow-600 text-left"}`}>{isMe ? ASTRO_NAME : selectedUser.name}</p>
-                        {m.image && <img src={m.image} className="max-h-64 rounded-xl mb-1.5 w-full object-cover border border-black/5" />}
-                        <div className="flex flex-wrap items-end justify-end gap-1 px-1">
-                          {m.text && <p className="text-[15px] text-gray-800 break-words whitespace-pre-wrap flex-1 min-w-[60px] leading-tight">{m.text}</p>}
-                          <div className="flex items-center gap-1 min-w-fit">
-                            <p className="text-[9px] text-gray-400 font-bold">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    <div className={`flex ${isMe ? "justify-end" : "justify-start"} mb-[2px]`}>
+                      <div className={`relative px-2 py-1.5 shadow-sm max-w-[85%] rounded-lg ${isMe ? "bg-[#dcf8c6] rounded-tr-none" : "bg-white rounded-tl-none"}`}>
+                        {m.image && <img src={m.image} className="max-h-60 rounded-md mb-1 w-full object-cover shadow-sm" />}
+                        <div className="flex flex-wrap items-end justify-end gap-2 px-0.5">
+                          {m.text && <p className="text-[14.5px] text-[#111b21] leading-tight break-words whitespace-pre-wrap">{m.text}</p>}
+                          <div className="flex items-center gap-1 min-w-fit pt-1">
+                            <p className="text-[10px] text-[#667781] uppercase">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
                             {isMe && <BlueTick isRead={!!m.read} />}
                           </div>
                         </div>
@@ -266,44 +261,35 @@ const AstrologerChatPage = () => {
               <div ref={bottomRef} />
             </main>
 
-            {/* --- Input --- */}
-            <form onSubmit={sendMessage} className="flex-none p-3 pb-6 bg-white flex items-center gap-2 border-t z-50">
-              <div className="flex-1 bg-gray-50 rounded-full flex items-center px-4 py-1 border border-gray-200 shadow-inner focus-within:bg-white focus-within:border-orange-300 transition-all">
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xl text-orange-500 mr-2 rotate-45 hover:scale-110 active:scale-90 transition-transform">📎</button>
-                <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} placeholder="Type a message..." className="flex-1 bg-transparent outline-none py-3 text-[15px]" onFocus={() => setTimeout(() => scrollToBottom("smooth"), 300)} />
+            {/* --- WhatsApp Input --- */}
+            <form onSubmit={sendMessage} className="flex-none p-2 bg-[#f0f2f5] flex items-center gap-2">
+              <div className="flex-1 bg-white rounded-full flex items-center px-3 py-1 shadow-sm border border-gray-100">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 -rotate-45">📎</button>
+                <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} placeholder="Type a message" className="flex-1 bg-transparent outline-none py-2 px-2 text-[15px]" onFocus={() => setTimeout(() => scrollToBottom("smooth"), 300)} />
               </div>
-              <button type="submit" className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-gradient-to-b from-orange-400 to-orange-600 text-white active:scale-90 hover:shadow-orange-200 transition-all">➤</button>
+              <button type="submit" className="w-11 h-11 rounded-full flex items-center justify-center bg-[#00a884] text-white shadow-md active:scale-95 transition-transform">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" className="ml-1"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+              </button>
             </form>
           </div>
         )}
 
-        {/* --- Profile Modal --- */}
+        {/* --- Profile Slide Up --- */}
         {showProfile && selectedUser && (
-          <div className="absolute inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white w-full rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-              <div className="bg-gradient-to-br from-yellow-400 via-orange-500 to-orange-600 p-8 flex flex-col items-center text-white relative">
-                <button onClick={() => setShowProfile(false)} className="absolute top-5 right-5 text-2xl font-bold opacity-80 hover:opacity-100">✕</button>
-                <img src={selectedUser.image || "/banners/astrouser.jpg"} className="w-28 h-28 rounded-full border-4 border-white/40 shadow-xl object-cover mb-4" />
-                <h2 className="text-2xl font-black">{selectedUser.name}</h2>
-                <p className="text-orange-100 font-bold tracking-widest">{selectedUser.mobile || "CLIENT PROFILE"}</p>
+          <div className="absolute inset-0 bg-black/60 z-[100] flex items-end animate-in fade-in duration-200">
+            <div className="bg-white w-full rounded-t-3xl p-6 animate-in slide-in-from-bottom duration-300">
+              <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+              <div className="flex flex-col items-center mb-6">
+                <img src={selectedUser.image || "/banners/astrouser.jpg"} className="w-24 h-24 rounded-full object-cover mb-3" />
+                <h3 className="text-xl font-bold">{selectedUser.name}</h3>
+                <p className="text-gray-500 font-medium">{selectedUser.mobile || "User Profile"}</p>
               </div>
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 flex flex-col items-center">
-                    <p className="text-[10px] text-orange-400 font-black uppercase mb-1">Birth Date</p>
-                    <p className="text-[15px] font-black text-gray-700">{selectedUser.dob || "N/A"}</p>
-                  </div>
-                  <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 flex flex-col items-center">
-                    <p className="text-[10px] text-orange-400 font-black uppercase mb-1">Birth Time</p>
-                    <p className="text-[15px] font-black text-gray-700">{selectedUser.tob || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                  <p className="text-[10px] text-gray-400 font-black uppercase mb-2">Place of Birth</p>
-                  <p className="text-[15px] font-bold text-gray-700 leading-tight">{selectedUser.pob || "Location not provided"}</p>
-                </div>
-                <button onClick={() => setShowProfile(false)} className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest">Close Details</button>
+              <div className="space-y-4 mb-8">
+                <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl"><span className="text-gray-500">Birth Date</span><span className="font-bold">{selectedUser.dob || "N/A"}</span></div>
+                <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl"><span className="text-gray-500">Birth Time</span><span className="font-bold">{selectedUser.tob || "N/A"}</span></div>
+                <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl"><span className="text-gray-500">Place of Birth</span><span className="font-bold text-right truncate ml-4">{selectedUser.pob || "N/A"}</span></div>
               </div>
+              <button onClick={() => setShowProfile(false)} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95 transition-all">CLOSE</button>
             </div>
           </div>
         )}
@@ -314,20 +300,17 @@ const AstrologerChatPage = () => {
         if (f) { setSelectedFile(f); setImagePreview(URL.createObjectURL(f)); }
       }} />
 
-      {/* --- Full Image Preview Modal --- */}
       {imagePreview && (
         <div className="fixed inset-0 bg-black z-[200] flex flex-col">
-          <header className="p-4 text-white flex justify-between items-center bg-black/40 backdrop-blur-md">
-            <button onClick={() => { setImagePreview(null); setSelectedFile(null); }} className="text-3xl p-2 font-light">✕</button>
-            <span className="font-black tracking-widest uppercase text-sm">Send Photo</span>
-            <div className="w-10"/>
+          <header className="p-4 text-white flex items-center justify-between bg-black/40">
+            <button onClick={() => { setImagePreview(null); setSelectedFile(null); }} className="text-2xl p-2">✕</button>
+            <span className="font-bold uppercase tracking-widest text-sm">Send Image</span>
+            <div className="w-10"></div>
           </header>
-          <div className="flex-1 flex items-center justify-center p-4">
-            <img src={imagePreview} className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl" />
-          </div>
-          <div className="p-6 pb-12 flex gap-3 bg-gradient-to-t from-black to-transparent">
-            <input value={input} onChange={e => setInput(e.target.value)} className="flex-1 bg-white/10 backdrop-blur-xl border border-white/20 text-white p-4 rounded-2xl outline-none placeholder:text-gray-400" placeholder="Add a caption..." />
-            <button onClick={() => sendMessage()} className="bg-orange-500 w-14 h-14 rounded-full text-white text-2xl shadow-2xl active:scale-90 transition-all flex items-center justify-center">✔</button>
+          <div className="flex-1 flex items-center justify-center p-2"><img src={imagePreview} className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl" /></div>
+          <div className="p-6 pb-12 flex gap-3">
+            <input value={input} onChange={e => setInput(e.target.value)} className="flex-1 bg-white/10 border border-white/20 text-white p-4 rounded-2xl outline-none" placeholder="Add a caption..." />
+            <button onClick={() => sendMessage()} className="bg-[#00a884] w-14 h-14 rounded-full text-white flex items-center justify-center shadow-xl">✔</button>
           </div>
         </div>
       )}

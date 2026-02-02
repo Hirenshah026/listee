@@ -13,6 +13,7 @@ type LoggedUser = {
   about?: string;
   freeChatTime?: number;
   isPlanActive?:boolean;
+  walletBalance?:number;
 };
 
 export default function useUser() {

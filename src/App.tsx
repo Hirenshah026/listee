@@ -46,6 +46,7 @@ import AstrologerPage from "./astronew/AstrologerPage";
 import HomePage from "./astronew/HomePage2";
 import ProfilePage from "./astronew/ProfilePage";
 import ChatPage from "./astrologer/ChatPage";
+import UserChatPage from "./astronew/UserChatPage";
 import AstrologerChatPage from "./astronew/AstrologerChatPage";
 import AstroLiveHost from "./astrologer/AstroLiveHost";
 import UserLiveList from "./astrologer/UserLiveList";
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="astro/profile" element={<ProfilePage />} />
         <Route path="astro/chat" element={<ChatPage />} />
+        <Route path="astro/my-chat" element={<UserChatPage />} />
         <Route path="astro/chat/user" element={<AstrologerChatPage />} />
         <Route path="astro/live" element={<AstroLiveHost />} />
         <Route path="astro/live/user" element={<UserLiveList />} />

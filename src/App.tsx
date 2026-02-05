@@ -50,7 +50,7 @@ import UserChatPage from "./astronew/UserChatPage";
 import AstrologerChatPage from "./astronew/AstrologerChatPage";
 import AstroLiveHost from "./astronew/AstroLiveHost";
 import UserLiveList from "./astrologer/UserLiveList";
-import LiveCallPage from "./astrologer/LiveCallPage";
+import LiveCallPage from "./astronew/LiveCallPage";
 import PanchangPage from "./astronew/PanchangPage";
 import CallPage from "./astronew/CallPage";
 

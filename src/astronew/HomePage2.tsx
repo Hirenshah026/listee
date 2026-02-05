@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import Header from './components/Header'; // Aapka naya sidebar wala header
 import BottomNavNew from './components/BottomNavNew'; // Aapka naya bottom nav
+import HomeSlider from "./components/HomeSlider";
 
 const ListeeAstro = () => {
   return (
@@ -29,6 +30,10 @@ const ListeeAstro = () => {
 
         <main className="px-4 mt-5 space-y-8 z-10">
 
+          <section>
+            <h3 className="text-lg font-bold text-gray-800">Popular</h3>
+            <div className="p-2"><HomeSlider /></div>
+          </section>
           {/* 2. HINDU CALENDAR */}
           <section>
             <div className="flex items-center justify-between mb-4">

@@ -5,6 +5,7 @@ import axios from "axios";
 type LoggedUser = {
   _id: string;
   name: string;
+  mobile?:string;
   email?: string;
   image?: string;
   role?: string;

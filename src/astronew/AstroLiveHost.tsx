@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import socket from "../components/chat/socket";
-import useUser from "../hooks/useUser"; // User hook import kiya
+import useUser from "../hooks/useUser";
 import BottomNav from "./components/BottomNavNew";
 import { Users, Power, Mic, MicOff, Video, VideoOff, User, X } from "lucide-react";
 
 const AstroLiveHost = () => {
-  const { user } = useUser(); // User data fetch kiya
+  const { user } = useUser();
   const [isLive, setIsLive] = useState(false);
   const [viewers, setViewers] = useState(0);
   const [messages, setMessages] = useState<any[]>([]);
@@ -14,164 +14,120 @@ const AstroLiveHost = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // useUser se ID nikaali, fallback ke liye purani ID rakhi hai
-  const ASTRO_ID = user?._id || "6958bde63adbac9b1c1da23e"; 
+  const pcs = useRef<{ [key: string]: RTCPeerConnection }>({}); 
+  const ASTRO_ID = user?._id || "6958bde63adbac9b1c1da23e";
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Register host on socket
+    socket.emit("join", ASTRO_ID);
 
-  useEffect(() => {
     socket.on("update-viewers", (count: number) => setViewers(count));
     socket.on("receive-message", (msg: any) => setMessages((prev) => [...prev, msg]));
-    
+
+    // Jab koi viewer room join kare
+    socket.on("viewer-joined", async ({ viewerId }) => {
+      console.log("New viewer joined:", viewerId);
+      const pc = createPeerConnection(viewerId);
+      pcs.current[viewerId] = pc;
+      
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit("offer-to-viewer", { to: viewerId, offer, from: ASTRO_ID });
+    });
+
+    socket.on("answer-from-viewer", async ({ from, answer }) => {
+      const pc = pcs.current[from];
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on("ice-candidate", async ({ from, candidate }) => {
+      const pc = pcs.current[from];
+      if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
     return () => {
       socket.off("update-viewers");
       socket.off("receive-message");
+      socket.off("viewer-joined");
+      socket.off("answer-from-viewer");
+      socket.off("ice-candidate");
     };
-  }, []);
+  }, [ASTRO_ID]);
+
+  const createPeerConnection = (viewerId: string) => {
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    });
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        pc.addTrack(track, streamRef.current!);
+      });
+    }
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ice-candidate", { to: viewerId, candidate: event.candidate });
+      }
+    };
+
+    return pc;
+  };
 
   const startLive = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user" }, 
-        audio: true 
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setIsLive(true);
-      
-      // Server ko join room bhej rahe hain
       socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
     } catch (err) {
-      console.error("Camera Error:", err);
+      alert("Please allow camera/mic access to go live.");
     }
   };
 
   const stopLive = () => {
-    // Bina alert ke seedha band karne ke liye logic
     socket.emit("end-stream", { astroId: ASTRO_ID });
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    Object.values(pcs.current).forEach(pc => pc.close());
+    pcs.current = {};
     setIsLive(false);
-    setMessages([]);
-    setViewers(0);
-  };
-
-  const toggleMic = () => {
-    if (streamRef.current) {
-      const track = streamRef.current.getAudioTracks()[0];
-      track.enabled = !track.enabled;
-      setIsMuted(!track.enabled);
-    }
-  };
-
-  const toggleVideo = () => {
-    if (streamRef.current) {
-      const track = streamRef.current.getVideoTracks()[0];
-      track.enabled = !track.enabled;
-      setIsVideoOff(!track.enabled);
-    }
   };
 
   return (
-    <div className="h-[100dvh] w-full bg-black flex justify-center overflow-hidden fixed inset-0">
-      <div className="w-full max-w-[450px] flex flex-col relative h-full border-x border-white/5">
-        
-        {/* Main Viewport */}
+    <div className="h-[100dvh] w-full bg-black flex justify-center fixed inset-0 overflow-hidden">
+      <div className="w-full max-w-[450px] flex flex-col relative border-x border-white/10">
         <div className="flex-1 relative bg-zinc-900 overflow-hidden">
+          <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover scale-x-[-1] ${isVideoOff ? 'hidden' : 'block'}`} />
           
-          {/* Video Feed */}
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            className={`w-full h-full object-cover scale-x-[-1] ${isVideoOff ? 'hidden' : 'block'}`} 
-          />
-
-          {/* Camera Off State */}
-          {isVideoOff && isLive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-800">
-              <div className="w-24 h-24 rounded-full bg-zinc-700 border-2 border-yellow-500 flex items-center justify-center">
-                <User size={50} className="text-yellow-500" />
+          {isLive && (
+            <div className="absolute top-6 left-4 right-4 flex justify-between items-center z-50">
+              <div className="bg-black/60 px-3 py-1 rounded-full flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+                <span className="text-white text-xs font-bold flex items-center gap-1"><Users size={14} /> {viewers}</span>
               </div>
-              <p className="text-yellow-500 mt-4 text-[10px] font-bold uppercase tracking-widest">Camera Off</p>
+              <button onClick={stopLive} className="bg-red-600 p-2 rounded-full"><X size={20} className="text-white" /></button>
             </div>
           )}
 
-          {/* --- LIVE OVERLAYS --- */}
-          {isLive && (
-            <>
-              {/* TOP BAR: Viewers & END Button */}
-              <div className="absolute top-6 left-4 right-4 flex justify-between items-center z-50">
-                <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-                  <span className="text-white text-xs font-bold flex items-center gap-1">
-                    <Users size={14} className="text-yellow-400" /> {viewers}
-                  </span>
-                </div>
-
-                {/* END LIVE BUTTON */}
-                <button 
-                  onClick={stopLive} 
-                  className="bg-red-600 w-10 h-10 flex items-center justify-center rounded-full border-2 border-white/20 shadow-xl active:scale-90"
-                >
-                  <X size={24} className="text-white" strokeWidth={3} />
-                </button>
-              </div>
-
-              {/* SIDE CONTROLS */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-50">
-                <button onClick={toggleMic} className={`p-3.5 rounded-full backdrop-blur-lg border ${isMuted ? 'bg-red-600 border-red-400' : 'bg-black/40 border-white/10'}`}>
-                  {isMuted ? <MicOff size={22} className="text-white" /> : <Mic size={22} className="text-white" />}
-                </button>
-                <button onClick={toggleVideo} className={`p-3.5 rounded-full backdrop-blur-lg border ${isVideoOff ? 'bg-red-600 border-red-400' : 'bg-black/40 border-white/10'}`}>
-                  {isVideoOff ? <VideoOff size={22} className="text-white" /> : <Video size={22} className="text-white" />}
-                </button>
-              </div>
-
-              {/* CHAT SECTION */}
-              <div className="absolute bottom-6 left-0 w-full px-4 z-40 flex flex-col gap-2 max-h-[30%] overflow-y-auto no-scrollbar pointer-events-none">
-                {messages.map((m, i) => (
-                  <div key={i} className="bg-black/40 backdrop-blur-md px-3 py-2 rounded-xl border-l-4 border-yellow-500 self-start max-w-[85%] pointer-events-auto shadow-lg">
-                    <p className="text-[12px] leading-tight">
-                      <span className="text-yellow-400 font-bold mr-1.5">{m.user}:</span>
-                      <span className="text-white">{m.text}</span>
-                    </p>
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
-              </div>
-            </>
-          )}
-
-          {/* START SCREEN */}
-          {!isLive && (
-            <div className="absolute inset-0 bg-zinc-950 flex flex-col items-center justify-center z-[80] p-6 text-center">
-              <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6 border border-yellow-500/20 shadow-[0_0_50px_rgba(234,179,8,0.1)]">
+          {!isLive ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 p-6">
+              <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6 border border-yellow-500/20">
                 <Power size={40} className="text-yellow-500" />
               </div>
-              <h2 className="text-white font-bold text-lg mb-8 uppercase tracking-widest">Astro Live Panel</h2>
-              <button 
-                onClick={startLive} 
-                className="w-full max-w-[280px] bg-yellow-500 text-black font-black py-4 rounded-2xl shadow-2xl active:scale-95 transition-all text-sm uppercase tracking-tighter"
-              >
-                Go Live Now
-              </button>
+              <button onClick={startLive} className="w-full max-w-[280px] bg-yellow-500 text-black font-bold py-4 rounded-2xl uppercase tracking-tighter">Start Live Session</button>
+            </div>
+          ) : (
+            <div className="absolute bottom-10 left-0 w-full px-4 max-h-[30%] overflow-y-auto pointer-events-none flex flex-col gap-2">
+              {messages.map((m, i) => (
+                <div key={i} className="bg-black/40 p-2 rounded-lg border-l-4 border-yellow-500 self-start pointer-events-auto">
+                  <p className="text-xs text-white"><span className="text-yellow-400 font-bold">{m.user}:</span> {m.text}</p>
+                </div>
+              ))}
             </div>
           )}
         </div>
-
-        {/* FOOTER */}
-        <div className="shrink-0 z-[100] bg-black">
-          <BottomNav />
-        </div>
-
+        <div className="shrink-0 bg-black"><BottomNav /></div>
       </div>
     </div>
   );

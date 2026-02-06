@@ -39,7 +39,7 @@ const LiveCallPage = () => {
     socket.on("update-viewers", (count) => setViewers(count));
     socket.on("receive-message", (msg) => setMessages((prev) => [...prev, msg]));
     socket.on("stream-ended", () => {
-        alert("The live session has ended.");
+        //alert("The live session has ended.");
         navigate(-1);
     });
 

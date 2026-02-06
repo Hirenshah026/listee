@@ -63,13 +63,11 @@ const AstroLiveHost = () => {
   };
 
   const stopLive = () => {
-    if (window.confirm("End Live Session?")) {
-      socket.emit("end-stream", { astroId: ASTRO_ID });
+    socket.emit("end-stream", { astroId: ASTRO_ID });
       streamRef.current?.getTracks().forEach(t => t.stop());
       setIsLive(false);
       // Room cleanup logic if needed or let socket disconnect handle it
       window.location.reload(); 
-    }
   };
 
   const toggleMic = () => {

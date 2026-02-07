@@ -3,7 +3,7 @@ import {
   ChevronRight, Play, Star, Sliders, MapPin, Clock, 
   Check, Youtube, Brain, GraduationCap
 } from 'lucide-react';
-import Header from './components/Header'; // Aapka naya sidebar wala header
+import Header from './components/Header'; 
 import BottomNavNew from './components/BottomNavNew'; // Aapka naya bottom nav
 import HomeSlider from "./components/HomeSlider";
 import LiveAstroSlider from "./components/LiveAstroSlider";

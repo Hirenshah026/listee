@@ -53,14 +53,24 @@ const AstroLiveHost = () => {
   }, [ASTRO_ID]);
 
   const startLive = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      setIsLive(true);
-      socket.emit("join-live-room", { astroId: ASTRO_ID, role: "host" });
-    } catch (err) { alert("Camera Permission Required"); }
-  };
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    streamRef.current = stream;
+    if (videoRef.current) videoRef.current.srcObject = stream;
+    setIsLive(true);
+    
+    // Yahan astroData bhej rahe hain taaki server list bana sake
+    socket.emit("join-live-room", { 
+      astroId: ASTRO_ID, 
+      role: "host",
+      astroData: {
+        name: user?.name,
+        image: user?.image,
+        specialty:  "Vedic Astrologer"
+      }
+    });
+  } catch (err) { alert("Camera Permission Required"); }
+};
 
   const stopLive = () => {
     socket.emit("end-stream", { astroId: ASTRO_ID });

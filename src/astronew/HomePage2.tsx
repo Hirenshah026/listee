@@ -7,6 +7,7 @@ import Header from './components/Header';
 import BottomNavNew from './components/BottomNavNew'; 
 import HomeSlider from "./components/HomeSlider";
 import LiveAstroSlider from "./components/LiveAstroSlider";
+import AstroSlider from "./components/AstroSlider1";
 
 const ListeeAstro = () => {
   return (
@@ -35,6 +36,7 @@ const ListeeAstro = () => {
             <h3 className="text-lg font-bold text-gray-800">Popular</h3>
             <div className="p-2"><HomeSlider /></div>
           </section>
+          <AstroSlider />
           {/* 2. HINDU CALENDAR */}
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -90,25 +92,7 @@ const ListeeAstro = () => {
           </section>
 
           {/* 4. LIVE NOW */}
-          <section>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-slate-800 flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-red-600 animate-ping"></span> Live Now
-              </h3>
-              <button className="text-orange-600 text-xs font-bold">View All</button>
-            </div>
-            <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2 px-1">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex flex-col items-center flex-shrink-0 cursor-pointer">
-                  <div className={`relative h-16 w-16 rounded-full border-2 p-1 ${i === 1 ? 'border-red-500 live-ring' : 'border-slate-200'}`}>
-                    <img src={`https://i.pravatar.cc/150?u=${i}`} className="rounded-full w-full h-full object-cover" alt="Expert" />
-                    {i === 1 && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-red-600 text-[8px] text-white px-2 py-0.5 rounded-md font-bold uppercase">Live</span>}
-                  </div>
-                  <p className="text-[10px] font-bold mt-2 text-slate-600">Expert {i}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+          
           <LiveAstroSlider />
 
           {/* 5. TOP EXPERTS */}

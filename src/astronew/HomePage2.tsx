@@ -6,6 +6,7 @@ import {
 import Header from './components/Header'; // Aapka naya sidebar wala header
 import BottomNavNew from './components/BottomNavNew'; // Aapka naya bottom nav
 import HomeSlider from "./components/HomeSlider";
+import LiveAstroSlider from "./components/LiveAstroSlider";
 
 const ListeeAstro = () => {
   return (
@@ -108,6 +109,7 @@ const ListeeAstro = () => {
               ))}
             </div>
           </section>
+          <LiveAstroSlider />
 
           {/* 5. TOP EXPERTS */}
           <section>

@@ -4,7 +4,7 @@ import {
   Check, Youtube, Brain, GraduationCap
 } from 'lucide-react';
 import Header from './components/Header'; 
-import BottomNavNew from './components/BottomNavNew'; // Aapka naya bottom nav
+import BottomNavNew from './components/BottomNavNew'; 
 import HomeSlider from "./components/HomeSlider";
 import LiveAstroSlider from "./components/LiveAstroSlider";
 

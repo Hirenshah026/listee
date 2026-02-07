@@ -33,9 +33,9 @@ const TopExpertsSlider = () => {
   if (loading || astrologers.length === 0) return null;
 
   return (
-    <section className="py-2">
+    <section >
       {/* Header */}
-      <div className="flex justify-between items-center px-5 mb-4">
+      <div className="flex justify-between items-center  mb-4">
         <h3 className="font-extrabold text-slate-800 text-lg tracking-tight">Top Experts</h3>
         <span className="text-orange-600 text-xs font-bold flex items-center cursor-pointer">
           Filter <Sliders size={12} className="ml-1" />
@@ -43,7 +43,7 @@ const TopExpertsSlider = () => {
       </div>
 
       {/* Horizontal Slider Wrapper */}
-      <div className="flex gap-4 overflow-x-auto no-scrollbar px-5 pb-4">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar  pb-4">
         {astrologers.map((astro) => (
           <div 
             key={astro._id}
@@ -57,7 +57,7 @@ const TopExpertsSlider = () => {
 
             {/* Expert Image */}
             <img 
-              src={astro.image || "https://i.pravatar.cc/150"} 
+              src={astro.image || "banners/astrouser.jpg"} 
               className="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-50" 
               alt={astro.name} 
             />

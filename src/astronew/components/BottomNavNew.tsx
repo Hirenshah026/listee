@@ -28,13 +28,13 @@ const BottomNavNew = () => {
       id: 'chat', 
       label: "Chat", 
       icon: MessageSquare, 
-      path: role === "astro" ? "/astro/chat/user" : "/astro/list" 
+      path: role === "astro" ? "/astro/chat/user" : "/user/astro/list" 
     },
     { 
       id: 'live', 
       label: "Live", 
       icon: Video, 
-      path: role === "astro" ? "/astro/live" : "/astro/live/user" 
+      path: role === "astro" ? "/astro/live" : "/user/astro/live/user" 
     },
     { id: 'call', label: "Call", icon: PhoneCall, path: "/call" },
     { id: 'panchang', label: "Panchang", icon: Sparkles, path: "/astro/panchang" },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const MobileAuth: React.FC = () => {
   const [mobile, setMobile] = useState("");
@@ -8,6 +8,11 @@ const MobileAuth: React.FC = () => {
   const [message, setMessage] = useState("");
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 1. Pata lagao user kahan se redirect hokar aaya hai
+  // Agar koi path nahi hai, toh default "/user/astro/list" par bhejenge
+  const from = location.state?.from?.pathname || "/user/astro/list";
 
   // ✅ Clear localStorage ONLY once (on page load)
   useEffect(() => {
@@ -40,13 +45,14 @@ const MobileAuth: React.FC = () => {
 
       setMessage(
         res.data.exists
-          ? "Logging you in…"
-          : "Creating your account…"
+          ? "Logging you in..."
+          : "Creating your account..."
       );
 
-      // ✅ Navigate after short delay
+      // ✅ Redirect to 'from' path (Original requested page)
+      // replace: true se history saaf rahegi (back karne pe login nahi aayega)
       setTimeout(() => {
-        navigate("/astro/list");
+        navigate(from, { replace: true });
       }, 1500);
 
     } catch (err: any) {
@@ -54,7 +60,6 @@ const MobileAuth: React.FC = () => {
         err.response?.data?.message || "Something went wrong"
       );
     } finally {
-      
       setTimeout(() => {
         setLoading(false);
       }, 1500);
@@ -63,24 +68,18 @@ const MobileAuth: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#e7f6f3] to-[#f9fafb] flex flex-col">
-
       {/* Top Brand */}
       <div className="py-8 text-center">
         <div className="mx-auto w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center shadow-lg">
           <span className="text-white text-2xl font-bold">W</span>
         </div>
-        <h1 className="mt-3 text-xl font-semibold text-gray-800">
-          WhatsApp
-        </h1>
-        <p className="text-sm text-gray-500">
-          Secure messaging starts here
-        </p>
+        <h1 className="mt-3 text-xl font-semibold text-gray-800">WhatsApp</h1>
+        <p className="text-sm text-gray-500">Secure messaging starts here</p>
       </div>
 
       {/* Card */}
       <div className="flex-1 flex items-start justify-center px-4">
         <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 mt-4">
-
           <h2 className="text-lg font-medium text-gray-800 text-center">
             Verify your phone number
           </h2>
@@ -89,7 +88,6 @@ const MobileAuth: React.FC = () => {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-
             {/* Phone Input */}
             <div className="flex gap-3">
               <div className="w-20 flex items-center justify-center border rounded-lg bg-gray-50 text-gray-700 font-medium">
@@ -127,9 +125,7 @@ const MobileAuth: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="pb-6 text-center text-xs text-gray-400">
-        from Meta
-      </div>
+      <div className="pb-6 text-center text-xs text-gray-400">from Meta</div>
     </div>
   );
 };

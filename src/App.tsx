@@ -1,6 +1,9 @@
 import { HashRouter as Router, Routes, Route } from "react-router";
+import { Outlet } from "react-router-dom"
 import ProtectedRoute from "./components/pr/ProtectedRoute";
 import StaffProtectedRoute from "./components/pr/StaffProtectedRoute";
+import AstroProtectedRoute from "./components/pr/AstroProtectedRoute";
+import UserProtectedRoute from "./components/pr/UserProtectedRoute";
 
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
@@ -10,16 +13,7 @@ import Home from "./pages/Dashboard/Home";
 import UserProfiles from "./pages/UserProfiles";
 import Calendar from "./pages/Calendar";
 import Blank from "./pages/Blank";
-import FormElements from "./pages/Forms/FormElements";
-import BasicTables from "./pages/Tables/BasicTables";
-import Alerts from "./pages/UiElements/Alerts";
-import Avatars from "./pages/UiElements/Avatars";
-import Badges from "./pages/UiElements/Badges";
-import Buttons from "./pages/UiElements/Buttons";
-import Images from "./pages/UiElements/Images";
-import Videos from "./pages/UiElements/Videos";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
+
 import { ScrollToTop } from "./components/common/ScrollToTop";
 
 // Admin Roles Pages
@@ -45,6 +39,7 @@ import AstrologerLogin from "./astrologer/AstrologerLogin";
 import AstrologerPage from "./astronew/AstrologerPage";
 import HomePage from "./astronew/HomePage2";
 import ProfilePage from "./astronew/ProfilePage";
+import UserProfile from "./astronew/UserProfile";
 import ChatPage from "./astrologer/ChatPage";
 import UserChatPage from "./astronew/UserChatPage";
 import AstrologerChatPage from "./astronew/AstrologerChatPage";
@@ -71,16 +66,10 @@ export default function App() {
         <Route path="astro/register" element={<AstrologerRegister />} />
         <Route path="astro/login" element={<AstrologerLogin />} />
         <Route path="astro/logout" element={<AstrologerLogin />} />
-        <Route path="astro/list" element={<AstrologerPage />} />
+        
         <Route path="astro/home" element={<HomePage />} />
         <Route path="/" element={<HomePage />} />
-        <Route path="astro/profile" element={<ProfilePage />} />
-        <Route path="astro/chat" element={<ChatPage />} />
-        <Route path="astro/my-chat" element={<UserChatPage />} />
-        <Route path="astro/chat/user" element={<AstrologerChatPage />} />
-        <Route path="astro/live" element={<AstroLiveHost />} />
-        <Route path="astro/live/user" element={<UserLiveList />} />
-        <Route path="/live-call/:astroId" element={<LiveCallPage />} />
+        
         <Route path="astro/panchang" element={<PanchangPage />} />
         <Route path="call" element={<CallPage />} />
         {/* PROTECTED ROUTES */}
@@ -97,16 +86,7 @@ export default function App() {
           <Route path="profile" element={<UserProfiles />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="blank" element={<Blank />} />
-          <Route path="form-elements" element={<FormElements />} />
-          <Route path="basic-tables" element={<BasicTables />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="avatars" element={<Avatars />} />
-          <Route path="badge" element={<Badges />} />
-          <Route path="buttons" element={<Buttons />} />
-          <Route path="images" element={<Images />} />
-          <Route path="videos" element={<Videos />} />
-          <Route path="line-chart" element={<LineChart />} />
-          <Route path="bar-chart" element={<BarChart />} />
+          
         </Route>
 
         <Route
@@ -140,6 +120,35 @@ export default function App() {
           }
         >
           <Route path="dashboard" element={<StaffDashboard />} />
+
+        </Route>
+        <Route
+          path="/astro/*"
+          element={
+            <AstroProtectedRoute>
+              <Outlet />
+            </AstroProtectedRoute>
+          }
+        >
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="chat/user" element={<AstrologerChatPage />} />
+          <Route path="live" element={<AstroLiveHost />} />
+
+        </Route>
+        <Route
+          path="/user/*"
+          element={
+            <UserProtectedRoute>
+              <Outlet />
+            </UserProtectedRoute>
+          }
+        >
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="astro/my-chat" element={<UserChatPage />} />       
+          <Route path="astro/list" element={<AstrologerPage />} />
+          <Route path="astro/live/user" element={<UserLiveList />} />
+          <Route path="live-call/:astroId" element={<LiveCallPage />} />
 
         </Route>
 

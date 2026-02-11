@@ -27,7 +27,7 @@ const AstroSlider = () => {
   }, []);
 
   const handleAstroClick = (astrologer: any) => {
-    navigate("/astro/chat", {
+    navigate("/user/astro/chat", {
       state: { astrologer } 
     });
   };

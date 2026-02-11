@@ -53,7 +53,7 @@ const LiveAstroSlider = () => {
             key={astro?._id || Math.random()} 
             onClick={() => {
                 if(isLiveMode) {
-                    navigate(`/live-call/${astro._id}`);
+                    navigate(`/user/live-call/${astro._id}`);
                 } else {
                     navigate("/user/astro/chat", { state: { astrologer: astro } });
                 }

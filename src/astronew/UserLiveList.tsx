@@ -58,7 +58,7 @@ const UserLiveList: React.FC = () => {
               {liveAstros.map((astro) => (
                 <div 
                   key={astro._id} 
-                  onClick={() => navigate(`/live-call/${astro._id}`)}
+                  onClick={() => navigate(`/user/live-call/${astro._id}`)}
                   className="bg-white rounded-[28px] border border-white shadow-[0_8px_20px_rgba(0,0,0,0.04)] active:scale-95 transition-all cursor-pointer overflow-hidden flex flex-col items-center"
                 >
                   {/* --- Image Section (MADE SMALLER) --- */}

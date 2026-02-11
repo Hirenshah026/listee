@@ -33,7 +33,7 @@ const ChatListPage = () => {
 
   // 👇 YE RAHA AAPKA ONCLICK LOGIC (State ke saath)
   const handleChatNavigation = (astrologer: any) => {
-    navigate("/astro/chat", {
+    navigate("/user/astro/chat", {
       state: { astrologer } // Poora object bhej rahe hain jaisa aapne bataya
     });
   };

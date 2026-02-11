@@ -15,6 +15,7 @@ type LoggedUser = {
   freeChatTime?: number;
   isPlanActive?:boolean;
   walletBalance?:number;
+  address?:string;
 };
 
 export default function useUser() {

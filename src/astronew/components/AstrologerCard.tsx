@@ -10,7 +10,7 @@ const AstrologerCard: React.FC<Props> = ({ astrologer }) => {
   const navigate = useNavigate();
 
   const handleFreeChat = () => {
-    navigate("/astro/chat", {
+    navigate("/user/astro/chat", {
       state: { astrologer }
     });
   };

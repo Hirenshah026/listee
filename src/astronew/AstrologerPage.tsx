@@ -48,7 +48,7 @@ const AstrologerListPage = () => {
         {/* 📥 NEW CHAT TAB SECTION */}
         <div className="px-4 mt-4">
           <div 
-            onClick={() => navigate("/astro/my-chat")}
+            onClick={() => navigate("/user/astro/my-chat")}
             className="group bg-gradient-to-r from-orange-500 to-orange-600 p-[1px] rounded-2xl shadow-md active:scale-[0.98] transition-all cursor-pointer"
           >
             <div className="bg-white group-hover:bg-orange-50 rounded-[15px] p-3 flex items-center justify-between">

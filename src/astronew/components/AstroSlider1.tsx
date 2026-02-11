@@ -25,7 +25,7 @@ const TopExpertsSlider = () => {
   }, []);
 
   const handleChatClick = (astro: any) => {
-    navigate("/astro/chat", {
+    navigate("/user/astro/chat", {
       state: { astrologer: astro }
     });
   };

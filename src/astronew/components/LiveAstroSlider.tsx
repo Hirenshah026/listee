@@ -55,7 +55,7 @@ const LiveAstroSlider = () => {
                 if(isLiveMode) {
                     navigate(`/live-call/${astro._id}`);
                 } else {
-                    navigate("/astro/chat", { state: { astrologer: astro } });
+                    navigate("/user/astro/chat", { state: { astrologer: astro } });
                 }
             }}
             className="flex flex-col items-center flex-shrink-0 cursor-pointer"

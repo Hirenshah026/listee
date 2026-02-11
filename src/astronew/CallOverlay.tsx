@@ -12,7 +12,7 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
   const [incomingCall, setIncomingCall] = useState<any>(null);
   const [callType, setCallType] = useState<'voice' | 'video' | null>(null);
   
-  // Controls & Timer States
+  // Controls & Timer
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
@@ -22,25 +22,20 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  
-  // FIXED: Using 'any' to avoid NodeJS namespace error in Browser
   const timerInterval = useRef<any>(null);
 
   useImperativeHandle(ref, () => ({
     startCall: (type: 'voice' | 'video') => { handleStartCall(type); }
   }));
 
-  // Timer Logic
+  // Timer logic
   useEffect(() => {
     if (isCalling) {
       timerInterval.current = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
     } else {
-      if (timerInterval.current) {
-        clearInterval(timerInterval.current);
-        timerInterval.current = null;
-      }
+      if (timerInterval.current) clearInterval(timerInterval.current);
       setSeconds(0);
     }
     return () => { if (timerInterval.current) clearInterval(timerInterval.current); };
@@ -61,7 +56,7 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
       if (peerConnection.current) {
         try {
           await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
-        } catch (e) { console.error("Remote Description Error", e); }
+        } catch (e) { console.error(e); }
       }
     });
 
@@ -70,7 +65,7 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
         if (peerConnection.current && data.candidate) {
           await peerConnection.current.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
-      } catch (e) { console.error("ICE Error", e); }
+      } catch (e) { console.error(e); }
     });
 
     socket.on("call-ended", () => stopAllTracks());
@@ -90,11 +85,8 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
       peerConnection.current.close();
       peerConnection.current = null;
     }
-    setIsCalling(false);
-    setIncomingCall(null);
-    setCallType(null);
-    setIsMicMuted(false);
-    setIsVideoOff(false);
+    setIsCalling(false); setIncomingCall(null); setCallType(null);
+    setIsMicMuted(false); setIsVideoOff(false);
   };
 
   const toggleMic = () => {
@@ -129,22 +121,20 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
       const sender = peerConnection.current?.getSenders().find(s => s.track?.kind === 'video');
       if (sender && videoTrack) {
         sender.replaceTrack(videoTrack);
-        // Old track stop karo battery bachane ke liye
         localStreamRef.current.getVideoTracks()[0].stop();
         localStreamRef.current.removeTrack(localStreamRef.current.getVideoTracks()[0]);
         localStreamRef.current.addTrack(videoTrack);
         if (localVideoRef.current) localVideoRef.current.srcObject = localStreamRef.current;
         setFacingMode(newMode);
       }
-    } catch (err) { console.error("Camera Switch Error", err); }
+    } catch (err) { console.error(err); }
   };
 
   const setupPeer = (stream: MediaStream, targetId: string) => {
     peerConnection.current = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
-        { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-        { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
+        { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" }
       ]
     });
 
@@ -179,7 +169,7 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
       await peerConnection.current!.setLocalDescription(offer);
       socket.emit("call-user", { to: targetUser._id, offer, from: userId, type });
       setTimeout(() => { if (localVideoRef.current) localVideoRef.current.srcObject = stream; }, 500);
-    } catch (err) { alert("Mic/Camera error! Please allow permissions."); }
+    } catch (err) { alert("Mic/Camera error!"); }
   };
 
   const acceptCall = async () => {
@@ -204,80 +194,91 @@ const CallOverlay = forwardRef((props: CallOverlayProps, ref) => {
 
   return (
     <>
-      {/* 1. Incoming Call UI */}
+      {/* 1. WhatsApp Style Incoming Call Screen */}
       {incomingCall && !isCalling && (
-        <div className="fixed inset-0 z-[3000] bg-[#0b141a] flex flex-col items-center justify-around text-white p-6">
+        <div className="fixed inset-0 z-[3000] bg-[#0b141a] flex flex-col items-center justify-between py-20 text-white">
           <div className="flex flex-col items-center">
-            <div className="w-28 h-28 rounded-full border-4 border-orange-500 overflow-hidden shadow-2xl">
+            <div className="w-24 h-24 rounded-full bg-zinc-800 mb-4 overflow-hidden ring-4 ring-zinc-700">
               <img src={targetUser?.image || "/banners/astrouser.jpg"} className="w-full h-full object-cover" alt="user" />
             </div>
-            <h2 className="text-2xl font-bold mt-4">{targetUser?.name || "Astro"}</h2>
-            <p className="text-orange-400 animate-pulse mt-2 uppercase text-xs font-bold font-mono">Incoming {incomingCall.type} call...</p>
+            <h2 className="text-2xl font-semibold">{targetUser?.name || "Astro User"}</h2>
+            <p className="text-zinc-400 text-sm mt-1">WhatsApp {incomingCall.type} call</p>
           </div>
-          <div className="flex gap-16">
-            <button onClick={() => { socket.emit("end-call", { to: incomingCall.from }); setIncomingCall(null); }} className="bg-red-500 w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg active:scale-90">✕</button>
-            <button onClick={acceptCall} className="bg-green-500 w-16 h-16 rounded-full flex items-center justify-center text-2xl text-white shadow-lg animate-bounce active:scale-90">✔</button>
+          
+          <div className="flex w-full justify-around px-10">
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => { socket.emit("end-call", { to: incomingCall.from }); setIncomingCall(null); }} className="bg-red-500 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-xl">✕</button>
+              <span className="text-xs text-zinc-400">Decline</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={acceptCall} className="bg-green-500 w-16 h-16 rounded-full flex items-center justify-center text-3xl text-white shadow-xl animate-bounce">✔</button>
+              <span className="text-xs text-zinc-400">Accept</span>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 2. Active Call UI */}
+      {/* 2. WhatsApp Style Active Call Overlay */}
       {isCalling && (
-        <div className="fixed inset-0 z-[3100] bg-zinc-950 flex flex-col items-center justify-center overflow-hidden">
+        <div className="fixed inset-0 z-[3100] bg-[#0b141a] flex flex-col items-center justify-center overflow-hidden">
           
-          {/* Remote Media Display */}
+          {/* Main Display: Remote View */}
           {callType === 'video' ? (
-            <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover bg-black" />
+            <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
           ) : (
             <div className="flex flex-col items-center">
-              <div className="w-32 h-32 rounded-full border-4 border-orange-500 mb-4 overflow-hidden shadow-2xl">
+               <div className="w-32 h-32 rounded-full border-2 border-zinc-700 mb-6 overflow-hidden">
                 <img src={targetUser?.image || "/banners/astrouser.jpg"} className="w-full h-full object-cover" alt="user" />
               </div>
-              <h3 className="text-white text-2xl font-bold">{targetUser?.name}</h3>
+              <h3 className="text-white text-2xl font-medium">{targetUser?.name}</h3>
+              <p className="text-zinc-400 text-sm mt-2">{formatTime(seconds)}</p>
             </div>
           )}
 
-          {/* Timer Overlay */}
-          <div className="absolute top-10 text-white font-mono bg-black/60 px-6 py-2 rounded-full text-lg z-[3300] border border-white/10 backdrop-blur-sm">
-            {formatTime(seconds)}
-          </div>
+          {/* Video Specific Overlays */}
+          {callType === 'video' && (
+            <>
+              {/* Header: Name and Timer */}
+              <div className="absolute top-10 left-6 text-white z-[3300]">
+                <h3 className="text-lg font-medium drop-shadow-md">{targetUser?.name}</h3>
+                <p className="text-sm opacity-80 drop-shadow-md">{formatTime(seconds)}</p>
+              </div>
 
-          {/* Floating Local Preview */}
-          {callType === 'video' && !isVideoOff && (
-            <div className="absolute top-24 right-6 w-28 h-40 border-2 border-white/20 rounded-2xl overflow-hidden bg-black shadow-2xl z-[3200]">
-              <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-            </div>
+              {/* Floating Mini Window (Self View) */}
+              {!isVideoOff && (
+                <div className="absolute top-6 right-6 w-24 h-36 rounded-xl overflow-hidden bg-black border border-white/10 shadow-2xl z-[3200]">
+                  <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
+                </div>
+              )}
+            </>
           )}
 
-          {/* Controls Bar */}
-          <div className="absolute bottom-10 flex items-center gap-4 bg-zinc-900/90 p-5 rounded-[40px] backdrop-blur-xl border border-white/10 shadow-2xl">
+          {/* WhatsApp Style Bottom Control Bar */}
+          <div className="absolute bottom-10 flex items-center justify-between w-[90%] max-w-[400px] bg-[#1f2c34]/90 backdrop-blur-xl px-6 py-4 rounded-[32px] border border-white/5 shadow-2xl z-[3400]">
+            
             {/* Mic Toggle */}
-            <button onClick={toggleMic} className={`${isMicMuted ? 'bg-red-500' : 'bg-zinc-700 hover:bg-zinc-600'} w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shadow-lg`}>
-              {isMicMuted ? '🔇' : '🎤'}
+            <button onClick={toggleMic} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMicMuted ? 'bg-white text-black' : 'bg-[#2a3942] text-white'}`}>
+              <span className="text-xl">{isMicMuted ? '🔇' : '🎤'}</span>
             </button>
 
             {/* Video Features */}
             {callType === 'video' && (
               <>
-                <button onClick={toggleVideo} className={`${isVideoOff ? 'bg-red-500' : 'bg-zinc-700 hover:bg-zinc-600'} w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shadow-lg`}>
-                  {isVideoOff ? '🚫' : '📹'}
+                <button onClick={toggleVideo} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isVideoOff ? 'bg-white text-black' : 'bg-[#2a3942] text-white'}`}>
+                  <span className="text-xl">{isVideoOff ? '🚫' : '📹'}</span>
                 </button>
-                <button onClick={switchCamera} className="bg-zinc-700 hover:bg-zinc-600 w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shadow-lg">
-                  🔄
+                <button onClick={switchCamera} className="w-12 h-12 rounded-full bg-[#2a3942] flex items-center justify-center text-white active:bg-zinc-600">
+                  <span className="text-xl">🔄</span>
                 </button>
               </>
             )}
 
-            {/* End Call */}
+            {/* End Call Button */}
             <button 
-              onClick={() => { 
-                const targetId = targetUser?._id || incomingCall?.from;
-                socket.emit("end-call", { to: targetId }); 
-                stopAllTracks(); 
-              }} 
-              className="bg-red-600 hover:bg-red-700 w-16 h-16 rounded-full flex items-center justify-center shadow-2xl active:scale-90 ml-2 transition-all"
+              onClick={() => { socket.emit("end-call", { to: targetUser?._id || incomingCall?.from }); stopAllTracks(); }} 
+              className="bg-[#ea0038] w-14 h-14 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform shadow-lg"
             >
-              <span className="text-white text-3xl rotate-[135deg]">📞</span>
+              <span className="text-3xl rotate-[135deg]">📞</span>
             </button>
           </div>
         </div>

@@ -48,6 +48,9 @@ import UserLiveList from "./astronew/UserLiveList";
 import LiveCallPage from "./astronew/LiveCallPage";
 import PanchangPage from "./astronew/PanchangPage";
 import CallPage from "./astronew/CallPage";
+import H1 from "./astronew/newPage/AstrologerList";
+import AstrologerList from "./astronew/newPage/AstrologerList";
+import AstroPublicProfile from "./astronew/AstroPublicProfile";
 
 export default function App() {
   return (
@@ -56,6 +59,7 @@ export default function App() {
       <Routes>
 
         {/* PUBLIC ROUTES */}
+        <Route path="/new-page" element={<H1 />} />
         <Route path="signin" element={<SignIn />} />
         <Route path="signup" element={<SignUp />} />
         <Route path="chat" element={<Chat />} />
@@ -68,8 +72,8 @@ export default function App() {
         <Route path="astro/logout" element={<AstrologerLogin />} />
         
         <Route path="astro/home" element={<HomePage />} />
-        <Route path="/" element={<HomePage />} />
-        
+        <Route path="/" element={<HomePage />} />        
+        <Route path="astro/all-list" element={<AstrologerList />} />
         <Route path="astro/panchang" element={<PanchangPage />} />
         <Route path="call" element={<CallPage />} />
         {/* PROTECTED ROUTES */}
@@ -149,6 +153,7 @@ export default function App() {
           <Route path="astro/list" element={<AstrologerPage />} />
           <Route path="astro/live/user" element={<UserLiveList />} />
           <Route path="live-call/:astroId" element={<LiveCallPage />} />
+          <Route path="view/astro" element={<AstroPublicProfile />} />
 
         </Route>
 

@@ -24,6 +24,12 @@ const TopExpertsSlider = () => {
     fetchAstros();
   }, []);
 
+  // Profile par jaane ke liye
+  const handleProfileClick = (astro: any) => {
+    navigate(`/user/view/astro`, { state: { astrologer: astro } });
+  };
+
+  // Chat par jaane ke liye
   const handleChatClick = (astro: any) => {
     navigate("/user/astro/chat", {
       state: { astrologer: astro }
@@ -33,22 +39,23 @@ const TopExpertsSlider = () => {
   if (loading || astrologers.length === 0) return null;
 
   return (
-    <section >
+    <section className="px-4 py-2">
       {/* Header */}
-      <div className="flex justify-between items-center  mb-4">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="font-extrabold text-slate-800 text-lg tracking-tight">Top Experts</h3>
-        <span className="text-orange-600 text-xs font-bold flex items-center cursor-pointer">
-          Filter <Sliders size={12} className="ml-1" />
-        </span>
+        <button onClick={() => navigate('astro/all-list')} className="text-orange-600 text-xs font-bold">
+          View All
+        </button>
       </div>
 
       {/* Horizontal Slider Wrapper */}
-      <div className="flex gap-4 overflow-x-auto no-scrollbar  pb-4">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4">
         {astrologers.map((astro) => (
-          <div 
+          <div
             key={astro._id}
-            // Card width fix for slider
-            className="flex-shrink-0 w-[300px] bg-white p-4 rounded-[28px] border border-slate-100 shadow-sm flex items-center gap-4 relative overflow-hidden active:scale-[0.97] transition-all"
+            // CARD CLICK: Profile khulegi
+            onClick={() => handleProfileClick(astro)}
+            className="flex-shrink-0 w-[300px] bg-white p-4 rounded-[28px] border border-slate-100 shadow-sm flex items-center gap-4 relative overflow-hidden active:scale-[0.97] transition-all cursor-pointer"
           >
             {/* Status Tag */}
             <div className="absolute top-0 right-0 bg-green-100 text-green-600 text-[8px] px-3 py-1 font-bold rounded-bl-xl uppercase tracking-tighter">
@@ -56,15 +63,15 @@ const TopExpertsSlider = () => {
             </div>
 
             {/* Expert Image */}
-            <img 
-              src={astro.image || "banners/astrouser.jpg"} 
-              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-50" 
-              alt={astro.name} 
+            <img
+              src={astro.image || "banners/astrouser.jpg"}
+              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-slate-50"
+              alt={astro.name}
             />
 
             {/* Info Section */}
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-slate-800 text-sm truncate">{astro.name}</h4>
+              <h4 className="font-bold text-slate-800 text-sm truncate uppercase">{astro.name}</h4>
               <p className="text-[10px] text-slate-400 font-medium truncate">
                 {astro.skills?.split(',')[0] || "Vedic"} • {astro.experience || "5"} yrs
               </p>
@@ -80,9 +87,9 @@ const TopExpertsSlider = () => {
                 <span className="text-sm font-black">₹{astro.price || "10"}</span>
                 <span className="text-[8px] font-bold">/min</span>
               </div>
-              <button 
+              <button
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevents card click
+                  e.stopPropagation(); // Prevents profile click when clicking chat
                   handleChatClick(astro);
                 }}
                 className="bg-orange-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold shadow-lg shadow-orange-100 active:scale-90 transition-all"

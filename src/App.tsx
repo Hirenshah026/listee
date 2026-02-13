@@ -74,6 +74,7 @@ export default function App() {
         <Route path="astro/home" element={<HomePage />} />
         <Route path="/" element={<HomePage />} />        
         <Route path="astro/all-list" element={<AstrologerList />} />
+        <Route path="user/view/astro" element={<AstroPublicProfile />} />
         <Route path="astro/panchang" element={<PanchangPage />} />
         <Route path="call" element={<CallPage />} />
         {/* PROTECTED ROUTES */}
@@ -153,7 +154,7 @@ export default function App() {
           <Route path="astro/list" element={<AstrologerPage />} />
           <Route path="astro/live/user" element={<UserLiveList />} />
           <Route path="live-call/:astroId" element={<LiveCallPage />} />
-          <Route path="view/astro" element={<AstroPublicProfile />} />
+          
 
         </Route>
 

@@ -7,10 +7,10 @@ const StoryExplorer = () => {
   const categories = ['All Stories', 'Kathas', 'Ganesha', 'Lord Krishna', 'Devi Maa'];
   
   const popularStories = [
-    { id: 1, title: 'Makhan Chor Krishna', subtitle: 'Leelas of Bal Krishna', time: '12 Mins', type: ['read', 'audio'], img: 'https://images.unsplash.com/photo-1582103287241-2762adba6c36?auto=format&fit=crop&q=80&w=400', liked: false },
-    { id: 2, title: 'Ganesh Janma Katha', subtitle: 'Birth of the Elephant God', time: '8 Mins', type: ['read'], img: 'https://images.unsplash.com/photo-1567591974574-e85263d4427b?auto=format&fit=crop&q=80&w=400', liked: false },
-    { id: 3, title: 'The Exile of Rama', subtitle: 'Ramayana Chronicles', time: '25 Mins', type: ['read', 'audio'], img: 'https://images.unsplash.com/photo-1590050752117-23a9d7fc6f3d?auto=format&fit=crop&q=80&w=400', liked: false },
-    { id: 4, title: "Hanuman's Devotion", subtitle: 'Stories of Bajrang Bali', time: '15 Mins', type: ['read', 'audio'], img: 'https://images.unsplash.com/photo-1610444535455-27a98cc7611a?auto=format&fit=crop&q=80&w=400', liked: true },
+    { id: 1, title: 'Makhan Chor Krishna', subtitle: 'Leelas of Bal Krishna', time: '12 Mins', type: ['read', 'audio'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmqCP6xQyFQ8tAM6CM_M4q8WVBpzHAC2VCoQf_Q_dEdw&s', liked: false },
+    { id: 2, title: 'Ganesh Janma Katha', subtitle: 'Birth of the Elephant God', time: '8 Mins', type: ['read'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSM_Y8s8sB4jtYGWN2B2jm4EXGt_I3HekVfyg&s', liked: false },
+    { id: 3, title: 'The Exile of Rama', subtitle: 'Ramayana Chronicles', time: '25 Mins', type: ['read', 'audio'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5cYpgvTY4FqS_PGy7nH9Q9pALh75yyOE6FcSWvff_Pg&s', liked: false },
+    { id: 4, title: "Hanuman's Devotion", subtitle: 'Stories of Bajrang Bali', time: '15 Mins', type: ['read', 'audio'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZ7W055dgSWHDKHx6u0gPrj986pAbdLEZ3Kc8S3wgz&s', liked: true },
   ];
 
   const filteredStories = activeTab === 'All Stories' 

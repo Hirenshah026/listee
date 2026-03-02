@@ -52,6 +52,14 @@ import H1 from "./astronew/newPage/AstrologerList";
 import AstrologerList from "./astronew/newPage/AstrologerList";
 import AstroPublicProfile from "./astronew/AstroPublicProfile";
 
+import N1 from "./astronew/newPage/AstrologerList";
+import N2 from "./astronew/newPage/DharmaWallet";
+import N3 from "./astronew/newPage/HomePage";
+import N4 from "./astronew/newPage/LiveDiscover";
+import N5 from "./astronew/newPage/RT";
+import N6 from "./astronew/newPage/UserProfile";
+import N7 from "./astronew/newPage/WalletTopUp";
+
 export default function App() {
   return (
     <Router >
@@ -77,6 +85,14 @@ export default function App() {
         <Route path="user/view/astro" element={<AstroPublicProfile />} />
         <Route path="astro/panchang" element={<PanchangPage />} />
         <Route path="call" element={<CallPage />} />
+
+        <Route path="/n1" element={<N1 />} />
+        <Route path="/n2" element={<N2 />} />
+        <Route path="/n3" element={<N3 />} />
+        <Route path="/n4" element={<N4 />} />
+        <Route path="/n5" element={<N5 />} />
+        <Route path="/n6" element={<N6 />} />
+        <Route path="/n7" element={<N7 />} />
         {/* PROTECTED ROUTES */}
         <Route
           path="/doctor-panel/*"

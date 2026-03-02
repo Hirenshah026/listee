@@ -1,19 +1,21 @@
 import React from 'react';
-import { 
-  ChevronRight, Play, Star, Sliders, MapPin, Clock, 
-  Check, Youtube, Brain, GraduationCap
+import {
+  ChevronRight, Play, Star, Sliders, MapPin, Clock,
+  Check, Youtube, Brain, GraduationCap, BookOpen, PlayCircle
 } from 'lucide-react';
-import Header from './components/Header'; 
-import BottomNavNew from './components/BottomNavNew'; 
+import Header from './components/Header';
+import BottomNavNew from './components/BottomNavNew';
 import HomeSlider from "./components/HomeSlider";
 import LiveAstroSlider from "./components/LiveAstroSlider";
 import AstroSlider from "./components/AstroSlider1";
+import StoryExplorer from './components/StoryExplorer';
 
 const ListeeAstro = () => {
   return (
     <div className="bg-gray-100 flex justify-center min-h-screen">
       {/* Styles for Animations and Fonts */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -26,7 +28,7 @@ const ListeeAstro = () => {
       `}} />
 
       <div className="w-full max-w-[450px] bg-slate-50 min-h-screen shadow-2xl relative flex flex-col overflow-x-hidden pb-32">
-        
+
         {/* --- 1. HEADER (Integrated) --- */}
         <Header />
 
@@ -37,6 +39,31 @@ const ListeeAstro = () => {
             <div className="p-2"><HomeSlider /></div>
           </section>
           <AstroSlider />
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold">Story of the Day</h2>
+              <span className="text-[#F15A24] text-sm font-bold cursor-pointer">View All</span>
+            </div>
+
+            <div className="relative w-full h-56 rounded-3xl overflow-hidden shadow-xl mb-8 group">
+              <img alt="Shiva" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB7iiM01oQ-W2r3nkwjSs9jdugJxFM-ov4CF2ISbXqFRJqdgk7TrSFR7HMjGH8uNTu_hfbkIjiQh7f2k1EVMzFGe17mItDh1VZOuu6COAW3jsxeOgIUK_zwVXDTpH1iLEV8fTLBgWrjBOmNMd3Z2U3CKLbyF7US2Kngk_M5Kj5o7cZ0_a2DFscBw_5mb_4XSNJJjmqV8Sv7k7lFiTaa3zitUI3raYMNXTM80PMKVhNg55j4e-RoakVyonUt5VpQBujfS_TwhDkvxI" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 p-5 w-full">
+                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">Most Read</span>
+                <h3 className="text-white text-xl font-bold mt-2">The Eternal Dance of Shiva</h3>
+                <p className="text-white/80 text-sm mt-1 line-clamp-1">Exploring the cosmic significance of Tandava and its rhythms.</p>
+                <div className="flex items-center gap-4 mt-3">
+                  <button className="bg-white text-[#F15A24] px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
+                    <BookOpen size={16} /> Read Now
+                  </button>
+                  <button className="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
+                    <PlayCircle size={16} /> Listen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <StoryExplorer />
           {/* 2. HINDU CALENDAR */}
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -92,7 +119,7 @@ const ListeeAstro = () => {
           </section>
 
           {/* 4. LIVE NOW */}
-          
+
           <LiveAstroSlider />
 
           {/* 5. TOP EXPERTS */}

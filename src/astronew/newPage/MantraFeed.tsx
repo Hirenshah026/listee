@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Sparkles, ArrowRight, BookOpen, Loader2 } from 'lucide-react';
 import BottomNav from '../components/BottomNavNew';
 
-const API_BASE_URL = "http://localhost:5000/api/mantras"; // Sahi route rakho
+const API_BASE_URL = "https://listee-backend.onrender.com/api/mantras"; // Sahi route rakho
 
 const MantraFeed: React.FC = () => {
   const [mantras, setMantras] = useState<any[]>([]);

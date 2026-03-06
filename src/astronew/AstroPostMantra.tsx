@@ -8,7 +8,7 @@ import BottomNav from './components/BottomNavNew';
 import useUser from "../hooks/useUser";
 
 // --- API Base Variable ---
-const API_BASE_URL = "http://localhost:5000/api/";
+const API_BASE_URL = "https://listee-backend.onrender.com/api/";
 
 const AstroPostMantra: React.FC = () => {
   const { user } = useUser();

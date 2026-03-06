@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ChevronLeft, Share2, Users, Star, Sparkles, Languages } from 'lucide-react';
 import BottomNav from '../components/BottomNavNew';
 
-const API_BASE_URL = "http://localhost:5000/api/mantras";
+const API_BASE_URL = "https://listee-backend.onrender.com/api/mantras";
 
 const MantraPage: React.FC = () => {
   const { id } = useParams();

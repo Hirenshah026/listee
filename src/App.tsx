@@ -51,6 +51,7 @@ import CallPage from "./astronew/CallPage";
 import H1 from "./astronew/newPage/AstrologerList";
 import AstrologerList from "./astronew/newPage/AstrologerList";
 import AstroPublicProfile from "./astronew/AstroPublicProfile";
+import AstroPostMantra from "./astronew/AstroPostMantra";
 
 import N1 from "./astronew/newPage/AstrologerList";
 import N2 from "./astronew/newPage/DharmaWallet";
@@ -59,6 +60,8 @@ import N4 from "./astronew/newPage/LiveDiscover";
 import N5 from "./astronew/newPage/RT";
 import N6 from "./astronew/newPage/UserProfile";
 import N7 from "./astronew/newPage/WalletTopUp";
+import N8 from "./astronew/newPage/MusicPlayer";
+import N9 from "./astronew/newPage/MantraFeed";
 
 export default function App() {
   return (
@@ -93,6 +96,9 @@ export default function App() {
         <Route path="/n5" element={<N5 />} />
         <Route path="/n6" element={<N6 />} />
         <Route path="/n7" element={<N7 />} />
+        <Route path="/n8" element={<N8 />} />
+        <Route path="/n9" element={<N9 />} />
+        <Route path="/mantra/:id" element={<N8 />} />
         {/* PROTECTED ROUTES */}
         <Route
           path="/doctor-panel/*"
@@ -154,6 +160,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="chat/user" element={<AstrologerChatPage />} />
           <Route path="live" element={<AstroLiveHost />} />
+          <Route path="create-mantra" element={<AstroPostMantra />} />
 
         </Route>
         <Route

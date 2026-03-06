@@ -10,6 +10,8 @@ const DemoLinks = ({ closeSidebar }) => {
     { path: "/n5", label: "RT Section" },
     { path: "/n6", label: "User Profile" },
     { path: "/n7", label: "Wallet TopUp" },
+    { path: "/n8", label: "Mantra" },
+    { path: "/n9", label: "Mantra List" },
   ];
 
   return (

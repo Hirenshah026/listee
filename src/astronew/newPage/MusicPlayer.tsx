@@ -85,7 +85,7 @@ const MantraPage: React.FC = () => {
 
           <div className="space-y-4">
             <div className="flex bg-slate-200/70 p-1.5 rounded-2xl gap-1">
-              {(['sanskrit', 'hindi', 'english'] as const).map((lang) => (
+              {(['sanskrit', 'hindi'] as const).map((lang) => (
                 <button
                   key={lang}
                   onClick={() => setActiveTab(lang)}

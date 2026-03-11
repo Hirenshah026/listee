@@ -61,7 +61,7 @@ import N5 from "./astronew/newPage/RT";
 import N6 from "./astronew/newPage/UserProfile";
 import N7 from "./astronew/newPage/WalletTopUp";
 import N8 from "./astronew/newPage/MusicPlayer";
-import N9 from "./astronew/newPage/MantraFeed";
+import N9 from "./astronew/newPage/MantraFeed1";
 
 export default function App() {
   return (

@@ -9,6 +9,7 @@ import HomeSlider from "./components/HomeSlider";
 import LiveAstroSlider from "./components/LiveAstroSlider";
 import AstroSlider from "./components/AstroSlider1";
 import StoryExplorer from './components/StoryExplorer';
+import HomeMantraSection from './components/HomeMantraSection'
 
 const ListeeAstro = () => {
   return (
@@ -100,7 +101,7 @@ const ListeeAstro = () => {
               </div>
             </div>
           </section>
-
+          <HomeMantraSection />
           {/* 3. LISTEN MANTRAS */}
           <section>
             <h3 className="text-lg font-bold text-gray-800 mb-4">Listen Mantras</h3>

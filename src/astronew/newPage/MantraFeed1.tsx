@@ -54,7 +54,7 @@ const MantraList = () => {
                       <img 
                         alt={m.title} 
                         className="w-full h-full object-cover" 
-                        src={m.img || "https://t4.ftcdn.net/jpg/18/31/30/61/240_F_1831306129_HyhG4huBNMZ1FZ6R5WM95ay4PX51HNNc.jpg"} 
+                        src={m?.image ? `https://listee-backend.onrender.com${m.image}` :  "https://t4.ftcdn.net/jpg/18/31/30/61/240_F_1831306129_HyhG4huBNMZ1FZ6R5WM95ay4PX51HNNc.jpg"} 
                       />
                       <button className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm">
                         <Heart size={12} className="text-[#F15A24]" />

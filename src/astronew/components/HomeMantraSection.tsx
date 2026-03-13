@@ -46,7 +46,7 @@ const HomeMantraSection = () => {
           >
             <div className="relative h-32 rounded-2xl overflow-hidden mb-3">
               <img 
-                src={m.img || DEFAULT_IMG} 
+                src={m?.image ? `https://listee-backend.onrender.com${m.image}` : DEFAULT_IMG} 
                 alt={m.title} 
                 className="w-full h-full object-cover" 
               />

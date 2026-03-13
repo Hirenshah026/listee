@@ -1,98 +1,112 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronLeft, Send, Type, FileText, CheckCircle2, 
-  Sparkles, UserCircle, Languages, Trash2, Edit3, X 
+  Sparkles, UserCircle, Languages, Trash2, Edit3, X, Image as ImageIcon, UploadCloud 
 } from 'lucide-react';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
 import BottomNav from './components/BottomNavNew';
 import useUser from "../hooks/useUser";
 
-// --- API Base Variable ---
-const API_BASE_URL = "https://listee-backend.onrender.com/api/";
+const API_BASE_URL = "https://listee-backend.onrender.com/api";
 
 const AstroPostMantra: React.FC = () => {
   const { user } = useUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [title, setTitle] = useState('');
   const [content, setContent] = useState({ sanskrit: '', hindi: '', english: '' });
   const [activeTab, setActiveTab] = useState<'sanskrit' | 'hindi' | 'english'>('sanskrit');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [myMantras, setMyMantras] = useState<any[]>([]);
-  
-  // Edit States
   const [isEditing, setIsEditing] = useState(false);
   const [currentEditId, setCurrentEditId] = useState('');
 
-  // 1. Fetch My Mantras
   const fetchMyMantras = async () => {
     if (!user?._id) return;
     try {
       const res = await axios.get(`${API_BASE_URL}/mantras-astro/${user._id}`);
       setMyMantras(res.data.data);
-    } catch (err) { console.error("Fetch error", err); }
+    } catch (err) { toast.error("Fetch error"); }
   };
 
   useEffect(() => { fetchMyMantras(); }, [user]);
 
-  // 2. Handle Create / Update
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => { setImagePreview(reader.result as string); };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsPosting(true);
     const token = localStorage.getItem("token");
-    const payload = { title, content, astroId: user?._id, astroName: user?.name };
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', JSON.stringify(content));
+    formData.append('astroId', user?._id || '');
+    formData.append('astroName', user?.name || '');
+    if (selectedFile) formData.append('image', selectedFile);
 
     try {
+      const config = { headers: { 'Authorization': `Bearer ${token}` } };
       if (isEditing) {
-        await axios.put(`${API_BASE_URL}/mantras/update/${currentEditId}`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API_BASE_URL}/mantras/update/${currentEditId}`, formData, config);
+        toast.success("Mantra Updated!");
       } else {
-        await axios.post(`${API_BASE_URL}/mantras/add`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${API_BASE_URL}/mantras/add`, formData, config);
+        toast.success("Mantra Published!");
       }
-
-      setIsPosting(false);
-      setShowSuccess(true);
       resetForm();
       fetchMyMantras();
-      setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
+      toast.error("Action failed!");
+    } finally {
       setIsPosting(false);
-      alert("Action failed!");
     }
   };
 
-  // 3. Handle Delete
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bhai, pakka delete karna hai?")) return;
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`${API_BASE_URL}/mantras/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      toast.success("Deleted!");
       fetchMyMantras();
-    } catch (err) { alert("Delete failed"); }
+    } catch (err) { toast.error("Delete failed"); }
   };
 
-  // 4. Set Edit Mode
   const startEdit = (mantra: any) => {
     setIsEditing(true);
     setCurrentEditId(mantra._id);
     setTitle(mantra.title);
     setContent(mantra.content);
+    setImagePreview(mantra.image ? `https://listee-backend.onrender.com${mantra.image}` : null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
     setTitle('');
     setContent({ sanskrit: '', hindi: '', english: '' });
+    setSelectedFile(null);
+    setImagePreview(null);
     setIsEditing(false);
     setCurrentEditId('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <div className="bg-slate-200 min-h-screen flex justify-center overflow-x-hidden pb-24">
+      <Toaster />
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -100,33 +114,38 @@ const AstroPostMantra: React.FC = () => {
       `}} />
 
       <div className="w-full max-w-[450px] bg-slate-50 min-h-screen shadow-2xl flex flex-col relative">
-        
-        {/* Header */}
         <header className="bg-orange-600 px-6 pt-12 pb-20 rounded-b-[45px] relative overflow-hidden shrink-0">
           <div className="relative z-10 flex justify-between items-center text-white">
-            <button className="p-2.5 bg-white/20 rounded-2xl"><ChevronLeft size={22} /></button>
+            <button onClick={() => window.history.back()} className="p-2.5 bg-white/20 rounded-2xl active:scale-90 transition-transform">
+              <ChevronLeft size={22} />
+            </button>
             <div className="text-center">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-100/80">Astro Creator Studio</p>
               <h2 className="text-sm font-bold tracking-tight">{isEditing ? "Edit Mantra" : "Post New Mantra"}</h2>
             </div>
             <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center overflow-hidden">
-               {user?.image ? <img src={user.image} className="w-full h-full object-cover"/> : <UserCircle size={24} />}
+               {user?.image ? <img src={user.image} className="w-full h-full object-cover" alt="pfp"/> : <UserCircle size={24} />}
             </div>
           </div>
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500 rounded-full blur-3xl opacity-40"></div>
         </header>
 
-        {/* Main Form */}
         <main className="px-6 -mt-10 z-20 flex-1 overflow-y-auto no-scrollbar">
-          
-          {showSuccess && (
-            <div className="bg-green-500 text-white p-4 rounded-3xl flex items-center gap-3 shadow-lg mb-4">
-              <CheckCircle2 size={24} />
-              <p className="text-xs font-bold">Mantra {isEditing ? "Updated" : "Published"}! ✨</p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="bg-white rounded-[30px] p-2 shadow-sm border border-slate-100">
+                <input type="file" hidden ref={fileInputRef} onChange={handleImageChange} />
+                {!imagePreview ? (
+                   <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full py-8 border-2 border-dashed border-slate-200 rounded-[25px] flex flex-col items-center justify-center gap-2 hover:bg-orange-50">
+                     <UploadCloud className="text-orange-500" size={32} />
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Add Mantra Image</span>
+                   </button>
+                ) : (
+                  <div className="relative h-44 w-full rounded-[25px] overflow-hidden">
+                    <img src={imagePreview} className="w-full h-full object-cover" alt="Mantra" />
+                    <button type="button" onClick={() => { setSelectedFile(null); setImagePreview(null); }} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg"><X size={14} /></button>
+                  </div>
+                )}
+            </div>
+
             <div className="bg-white rounded-[30px] p-5 shadow-sm border border-slate-100">
               <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2"><Type size={14} className="text-orange-500" /> Title</label>
               <input placeholder="Title..." className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -153,26 +172,25 @@ const AstroPostMantra: React.FC = () => {
             </div>
           </form>
 
-          {/* Manage Mantras List */}
           <div className="mt-12 space-y-4 pb-20">
-             <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-2">
-                <Edit3 size={14} className="text-orange-500" /> My Published Mantras
-             </h3>
+             <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-2"><Edit3 size={14} className="text-orange-500" /> My Published Mantras</h3>
              {myMantras.map((m) => (
-               <div key={m._id} className="bg-white p-5 rounded-[30px] border border-slate-100 shadow-sm flex justify-between items-start animate-in fade-in slide-in-from-bottom-2">
-                 <div className="max-w-[70%]">
-                    <h4 className="text-xs font-black text-orange-600 uppercase mb-1">{m.title}</h4>
-                    <p className="text-xs font-bold text-slate-600 line-clamp-1 italic">"{m.content.sanskrit}"</p>
-                 </div>
-                 <div className="flex gap-2">
-                    <button onClick={() => startEdit(m)} className="p-2.5 bg-blue-50 text-blue-500 rounded-xl active:scale-90"><Edit3 size={16}/></button>
-                    <button onClick={() => handleDelete(m._id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl active:scale-90"><Trash2 size={16}/></button>
-                 </div>
+               <div key={m._id} className="bg-white p-4 rounded-[30px] border border-slate-100 shadow-sm flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0">
+                    {m.image ? <img src={`https://listee-backend.onrender.com${m.image}`} className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-3 text-slate-300" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                     <h4 className="text-[11px] font-black text-orange-600 uppercase truncate">{m.title}</h4>
+                     <p className="text-[10px] font-bold text-slate-500 line-clamp-1">"{m.content.sanskrit}"</p>
+                  </div>
+                  <div className="flex gap-1">
+                     <button onClick={() => startEdit(m)} className="p-2 bg-blue-50 text-blue-500 rounded-xl"><Edit3 size={14}/></button>
+                     <button onClick={() => handleDelete(m._id)} className="p-2 bg-red-50 text-red-500 rounded-xl"><Trash2 size={14}/></button>
+                  </div>
                </div>
              ))}
           </div>
         </main>
-
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[450px] z-50">
           <BottomNav />
         </div>

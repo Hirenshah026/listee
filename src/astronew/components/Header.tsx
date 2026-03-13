@@ -79,6 +79,7 @@ const Header = () => {
             {isLoggedIn ? (
               <>
                 <Link to={role === "astro" ? "/astro/profile" : "/user/profile"} className="text-gray-700 font-bold p-4 rounded-2xl hover:bg-orange-50 flex justify-between" onClick={() => setSidebarOpen(false)}>Profile <span>→</span></Link>
+                {role === "astro" ? <Link to="/astro/create-mantra" className="text-gray-700 font-bold p-4 rounded-2xl hover:bg-orange-50 flex justify-between" onClick={() => setSidebarOpen(false)}>Create Mantra <span>→</span></Link> : ''}
                 <button onClick={handleLogout} className="text-red-600 font-bold p-4 rounded-2xl hover:bg-red-50 flex justify-between items-center">Logout <LogOut size={18} /></button>
               </>
             ) : (

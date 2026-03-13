@@ -5,7 +5,7 @@ import axios from 'axios';
 import BottomNav from "./components/BottomNavNew";
 import useUser from "../hooks/useUser";
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "https://listee-backend.onrender.com";
 
 const AstroPublicProfile: React.FC = () => {
   const location = useLocation();
